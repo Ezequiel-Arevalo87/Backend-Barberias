@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using CrudApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 // 🔹 Configurar EF Core con SQL Server
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -17,7 +17,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // 🔹 Registrar servicios en la inyección de dependencias
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IHorarioService, HorarioService>();
+builder.Services.AddScoped<ITurnoService, TurnoService>();
+builder.Services.AddScoped<IServiceService, ServiceService>();
+builder.Services.AddScoped<IBarberiaService, BarberiaService>();
+builder.Services.AddScoped<IBarberoService, BarberoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IClienteService, ClienteService>();
+builder.Services.AddScoped<ITipoDocumentoService, TipoDocumentoService>();
+builder.Services.AddScoped<CrudApi.Notifications.Notifications>();
 builder.Services.AddScoped<JwtHelper>();
 
 // 🔹 Habilitar CORS
@@ -29,14 +37,13 @@ builder.Services.AddCors(options =>
                           .AllowAnyHeader());
 });
 
-
+// ✅ SOLO esta línea de AddControllers (con tu JsonDateConverter)
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new JsonDateConverter());
 });
 
-
-
+builder.Services.AddEndpointsApiExplorer();
 
 // 🔹 Configurar autenticación con JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -71,8 +78,6 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
 
 // 🔹 Configurar Swagger con autenticación JWT
 builder.Services.AddSwaggerGen(c =>
@@ -108,25 +113,19 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// 🔹 Habilitar archivos estáticos para Swagger UI
+// 🔹 Middleware
 app.UseStaticFiles();
-
-// 🔹 Redirección a HTTPS
 app.UseHttpsRedirection();
-
-// 🔹 Activar CORS
 app.UseCors("AllowAll");
-
-// 🔹 Middleware de autenticación y autorización
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 🔹 Configurar Swagger UI
+// ✅ Swagger accesible desde la raíz https://localhost:7238/
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "API CrudApi v1");
-    c.RoutePrefix = "swagger"; // Asegura que Swagger esté en "/swagger"
+    c.RoutePrefix = string.Empty; // 👈 Esto hace que Swagger se muestre en la raíz
 });
 
 // 🔹 Mapear controladores

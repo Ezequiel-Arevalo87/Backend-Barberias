@@ -19,8 +19,12 @@ public class UsuarioService : IUsuarioService
             .Select(u => new UsuarioDTO
             {
                 Id = u.Id,
+                NombreBarberia = u.NombreBarberia,
                 Nombre = u.Nombre,
                 Correo = u.Correo,
+                Direccion = u.Direccion,
+                Telefono = u.Telefono,
+                Descripcion = u.Descripcion,
                 FechaRegistro = u.FechaRegistro
             })
             .ToListAsync(); // Error: `ToListAsync()` no disponible para DTOs
@@ -32,7 +36,14 @@ public class UsuarioService : IUsuarioService
         var usuario = await _context.Usuarios.FindAsync(id);
         if (usuario == null) return null;
 
-        return new UsuarioDTO { Id = usuario.Id, Nombre = usuario.Nombre, Correo = usuario.Correo };
+        return new UsuarioDTO { 
+            Id = usuario.Id,
+            NombreBarberia = usuario.NombreBarberia,
+            Nombre = usuario.Nombre, 
+            Correo = usuario.Correo, 
+            Descripcion = usuario.Descripcion,
+            FechaRegistro = usuario.FechaRegistro
+        };
     }
 
     public async Task<Usuario> CreateUsuarioAsync(UsuarioCreateDTO usuarioDto)
@@ -46,8 +57,12 @@ public class UsuarioService : IUsuarioService
 
         var usuario = new Usuario
         {
+            NombreBarberia = usuarioDto.NombreBarberia,
             Nombre = usuarioDto.Nombre,
             Correo = usuarioDto.Correo,
+            Descripcion = usuarioDto.Descripcion,
+            Direccion = usuarioDto.Direccion,
+            Telefono = usuarioDto.Telefono,
             Clave = usuarioDto.Clave,
             RoleId = usuarioDto.RoleId,
             FechaRegistro = usuarioDto.FechaRegistro
@@ -72,6 +87,9 @@ public class UsuarioService : IUsuarioService
         // Actualizamos solo si se proporcionan nuevos datos
         usuario.Nombre = usuarioDto.Nombre ?? usuario.Nombre;
         usuario.Correo = usuarioDto.Correo ?? usuario.Correo;
+        usuario.Descripcion = usuarioDto.Descripcion ?? usuario.Descripcion;
+        usuario.Direccion = usuarioDto.Direccion ?? usuario.Direccion;
+        usuario.Telefono = usuarioDto.Telefono ?? usuario.Telefono;
 
         // Si el usuario envía una nueva clave, encriptarla antes de actualizar
         if (!string.IsNullOrWhiteSpace(usuarioDto.Clave))

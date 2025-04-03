@@ -19,7 +19,7 @@ namespace CrudApi.Controllers
             _usuarioService = usuarioService;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet]
         public async Task<ActionResult<List<UsuarioDTO>>> GetUsuarios()
         {
@@ -36,10 +36,12 @@ namespace CrudApi.Controllers
             return Ok(usuario);
         }
 
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> CrearUsuario([FromBody] UsuarioCreateDTO usuarioDto)
         {
+           
+
             var nuevoUsuario = await _usuarioService.CreateUsuarioAsync(usuarioDto);
             return CreatedAtAction(nameof(GetUsuario), new { id = nuevoUsuario.Id }, nuevoUsuario);
         }

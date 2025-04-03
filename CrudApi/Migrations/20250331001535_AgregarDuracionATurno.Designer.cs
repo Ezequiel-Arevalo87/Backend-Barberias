@@ -4,6 +4,7 @@ using CrudApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,13 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CrudApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250331001535_AgregarDuracionATurno")]
+    partial class AgregarDuracionATurno
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.0")
+                .HasAnnotation("ProductVersion", "9.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -36,10 +39,6 @@ namespace CrudApi.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FotoBarberia")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -66,6 +65,7 @@ namespace CrudApi.Migrations
                         .HasColumnType("nvarchar(15)");
 
                     b.Property<int>("TipoDocumentoId")
+                        .HasMaxLength(20)
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -260,11 +260,8 @@ namespace CrudApi.Migrations
                     b.Property<DateTime>("FechaHora")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("FechaHoraInicio")
+                    b.Property<DateTime>("HoraInicio")
                         .HasColumnType("datetime2");
-
-                    b.Property<TimeSpan>("HoraInicio")
-                        .HasColumnType("time");
 
                     b.Property<int>("ServicioId")
                         .HasColumnType("int");
@@ -335,8 +332,7 @@ namespace CrudApi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool?>("Abierto")
-                        .IsRequired()
+                    b.Property<bool>("Abierto")
                         .HasColumnType("bit");
 
                     b.Property<int>("BarberiaId")
@@ -347,8 +343,7 @@ namespace CrudApi.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<bool?>("EsFestivo")
-                        .IsRequired()
+                    b.Property<bool>("EsFestivo")
                         .HasColumnType("bit");
 
                     b.Property<TimeSpan>("HoraFin")
