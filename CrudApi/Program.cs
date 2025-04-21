@@ -13,12 +13,15 @@ using Hangfire.Dashboard;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configurar appsettings.json (aunque Render usa ENV)
+// 🔹 Configurar appsettings.json (opcional en Render)
 builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+// ✅ Obtener la cadena de conexión desde el entorno (Render usa ENV)
+var dbConnectionString = builder.Configuration["DefaultConnection"];
 
 // 🔹 Configurar EF Core con SQL Server
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(dbConnectionString));
 
 // 🔹 Registrar servicios en la inyección de dependencias
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
@@ -46,7 +49,7 @@ builder.Services.AddCors(options =>
 
 // 🔹 Configurar Hangfire
 builder.Services.AddHangfire(config =>
-    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+    config.UseSqlServerStorage(dbConnectionString));
 builder.Services.AddHangfireServer();
 
 // 🔹 Configurar controladores y opciones JSON
