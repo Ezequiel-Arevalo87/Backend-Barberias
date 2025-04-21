@@ -9,16 +9,15 @@ namespace CrudApi.Notifications
     public class Notifications
     {
         private readonly IConfiguration _configuration;
+        private static bool firebaseInitialized = false;
 
         public Notifications(IConfiguration configuration)
         {
             _configuration = configuration;
-          
 
-            // Verifica si ya existe una instancia de FirebaseApp
             string firebaseJson = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS_JSON");
 
-            if (FirebaseApp.DefaultInstance == null)
+            if (!firebaseInitialized && FirebaseApp.DefaultInstance == null)
             {
                 try
                 {
@@ -26,15 +25,20 @@ namespace CrudApi.Notifications
                     {
                         Credential = GoogleCredential.FromJson(firebaseJson)
                     });
+
+                    firebaseInitialized = true;
+                    Console.WriteLine("✅ FirebaseApp inicializado correctamente.");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"⚠️ Error al inicializar FirebaseApp: {ex.Message}");
                 }
             }
-
+            else
+            {
+                Console.WriteLine("ℹ️ FirebaseApp ya estaba inicializado.");
+            }
         }
-
         public async Task<string> SendNotificationAsync(string token, string title, string body, TurnoDTO turno)
         {
             if (FirebaseMessaging.DefaultInstance == null)
