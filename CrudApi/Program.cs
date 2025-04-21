@@ -11,10 +11,10 @@ using CrudApi.Models;
 using Hangfire;
 using Hangfire.Dashboard;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+// Configurar appsettings.json (aunque Render usa ENV)
+builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
 // 🔹 Configurar EF Core con SQL Server
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -32,8 +32,7 @@ builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<ITipoDocumentoService, TipoDocumentoService>();
 builder.Services.AddScoped<CrudApi.Notifications.Notifications>();
 builder.Services.AddScoped<ISucursalBarberiaService, SucursalBarberiaService>();
-builder.Services.AddScoped<IShiftService, ShiftService>(); // 👈 Agregado para turnos automáticos
-
+builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<JwtHelper>();
 
 // 🔹 Habilitar CORS
@@ -60,12 +59,13 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 
 // 🔹 Configurar autenticación con JWT
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings.GetValue<string>("Key");
+var secretKey = builder.Configuration["JwtSettings:Key"];
+var issuer = builder.Configuration["JwtSettings:Issuer"];
+var audience = builder.Configuration["JwtSettings:Audience"];
 
-if (string.IsNullOrEmpty(secretKey))
+if (string.IsNullOrEmpty(secretKey) || string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(audience))
 {
-    throw new Exception("⚠️ La clave secreta JWT no está configurada en appsettings.json");
+    throw new Exception("⚠️ La configuración JWT (Key, Issuer o Audience) no está definida.");
 }
 
 var key = Encoding.UTF8.GetBytes(secretKey);
@@ -85,8 +85,8 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(key),
         ValidateIssuer = true,
         ValidateAudience = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
+        ValidIssuer = issuer,
+        ValidAudience = audience,
         ValidateLifetime = true
     };
 });
@@ -129,26 +129,26 @@ var app = builder.Build();
 
 // 🔹 Middleware
 app.UseStaticFiles();
-//app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ✅ Swagger accesible desde la raíz https://localhost:7238/
+// ✅ Swagger accesible desde la raíz
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "API CrudApi v1");
-    c.RoutePrefix = string.Empty; // 👈 Esto hace que Swagger se muestre en la raíz
+    c.RoutePrefix = string.Empty;
 });
 
 // 🔹 Mapear controladores
 app.MapControllers();
 
-// 🔹 Activar Dashboard de Hangfire en https://localhost:7238/hangfire
+// 🔹 Activar Dashboard de Hangfire
 app.UseHangfireDashboard();
 
-// 🔁 Tarea recurrente que se ejecuta cada minuto para actualizar los estados de turnos
+// 🔁 Tarea recurrente: actualizar turnos automáticamente
 RecurringJob.AddOrUpdate<IShiftService>(
     "actualizar-estados-turnos",
     x => x.CerrarTurnosVencidosAsync(),
