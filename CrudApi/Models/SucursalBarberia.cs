@@ -1,0 +1,16 @@
+﻿public class SucursalBarberia
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; }
+    public string Direccion { get; set; }
+    public string Telefono { get; set; }
+    public string? FotoSucursal { get; set; }
+
+    public int BarberiaId { get; set; }
+    public Barberia Barberia { get; set; }
+
+    // Opcionales según lo anterior
+    public int? TipoDocumentoId { get; set; }
+    public string? NumeroDocumento { get; set; }
+    public int? Estado { get; set; } = 1; // 1 = Activo, 0 = Inactivo
+}

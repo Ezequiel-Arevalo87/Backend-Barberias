@@ -1,0 +1,20 @@
+# Ignorar archivos y carpetas de Visual Studio
+.vs/
+*.suo
+*.user
+
+# Ignorar carpetas de build de .NET
+bin/
+obj/
+
+# Ignorar archivos de paquete
+*.nupkg
+packages/
+
+# Archivos temporales
+*.log
+*.tmp
+*.cache
+
+# Ignorar solo el JSON de Firebase
+Credentials/*.json
