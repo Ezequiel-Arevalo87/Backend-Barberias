@@ -13,16 +13,18 @@ namespace CrudApi.Notifications
         public Notifications(IConfiguration configuration)
         {
             _configuration = configuration;
-            string credentialPath = _configuration.GetValue<string>("Firebase:CredentialPath");
+          
 
             // Verifica si ya existe una instancia de FirebaseApp
+            string firebaseJson = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS_JSON");
+
             if (FirebaseApp.DefaultInstance == null)
             {
                 try
                 {
                     FirebaseApp.Create(new AppOptions
                     {
-                        Credential = GoogleCredential.FromFile(credentialPath)
+                        Credential = GoogleCredential.FromJson(firebaseJson)
                     });
                 }
                 catch (Exception ex)
@@ -30,6 +32,7 @@ namespace CrudApi.Notifications
                     Console.WriteLine($"⚠️ Error al inicializar FirebaseApp: {ex.Message}");
                 }
             }
+
         }
 
         public async Task<string> SendNotificationAsync(string token, string title, string body, TurnoDTO turno)
