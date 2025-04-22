@@ -39,20 +39,8 @@ namespace CrudApi.Notifications
                 Console.WriteLine("ℹ️ FirebaseApp ya estaba inicializado.");
             }
         }
-        public async Task<string> SendNotificationAsync(string token, TurnoDTO turno)
+        public async Task<string> SendNotificationAsync(string token, string title, string body, TurnoDTO turno)
         {
-            if (FirebaseMessaging.DefaultInstance == null)
-                throw new InvalidOperationException("❌ FirebaseMessaging.DefaultInstance no está inicializado.");
-
-            var cultura = new System.Globalization.CultureInfo("es-CO");
-
-            // 🧠 Formatea la fecha con zona horaria y en español
-            var fechaFormateada = turno.FechaHoraInicio.ToLocalTime()
-                .ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
-
-            string title = "Turno Confirmado";
-            string body = $"Tu turno fue agendado para el {fechaFormateada}. Servicio: {turno.ServicioNombre}";
-
             var message = new Message()
             {
                 Token = token,
