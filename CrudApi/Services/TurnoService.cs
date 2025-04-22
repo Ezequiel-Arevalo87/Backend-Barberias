@@ -3,6 +3,7 @@ using CrudApi.Notifications;
 using CrudApi.Data;
 using Microsoft.EntityFrameworkCore;
 using CrudApi.Models;
+using System.Globalization;
 
 public class TurnoService : ITurnoService
 {
@@ -35,7 +36,6 @@ public class TurnoService : ITurnoService
 
     public async Task<TurnoDTO> CrearTurnoAsync(TurnoCreateDTO turnoCreateDTO)
     {
-        // ✅ Convertir hora a hora Colombia antes de guardar
         var fechaLocal = TimeZoneInfo.ConvertTimeFromUtc(turnoCreateDTO.FechaHoraInicio.ToUniversalTime(), _zonaColombia);
 
         var turno = new Turno
@@ -81,22 +81,12 @@ public class TurnoService : ITurnoService
 
         if (!string.IsNullOrWhiteSpace(tokenCliente))
         {
-            await _notificationsService.SendNotificationAsync(
-                tokenCliente,
-                "Turno Confirmado",
-                $"Tu turno con {turnoDTO.BarberoNombre} fue agendado para el {turnoDTO.FechaHoraInicio:dddd dd/MM/yyyy} a las {turnoDTO.FechaHoraInicio:hh:mm tt}.\nServicio: {turnoDTO.ServicioNombre}",
-                turnoDTO
-            );
+            await _notificationsService.SendNotificationAsync(tokenCliente, turnoDTO);
         }
 
         if (!string.IsNullOrWhiteSpace(tokenBarbero))
         {
-            await _notificationsService.SendNotificationAsync(
-                tokenBarbero,
-                "Nuevo Turno Asignado",
-                $"Tienes un nuevo turno con {turnoDTO.ClienteNombre} el {turnoDTO.FechaHoraInicio}",
-                turnoDTO
-            );
+            await _notificationsService.SendNotificationAsync(tokenBarbero, turnoDTO);
         }
 
         turno.Notificado = true;
@@ -144,22 +134,12 @@ public class TurnoService : ITurnoService
 
         if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
         {
-            await _notificationsService.SendNotificationAsync(
-                turno.Cliente.NotificationToken,
-                "Turno Cancelado",
-                $"Tu turno fue cancelado por el barbero. Motivo: {dto.Motivo}",
-                turnoDTO
-            );
+            await _notificationsService.SendNotificationAsync(turno.Cliente.NotificationToken, turnoDTO);
         }
 
         if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
         {
-            await _notificationsService.SendNotificationAsync(
-                turno.Barbero.NotificationToken,
-                "Turno Cancelado",
-                $"Cancelaste un turno con {turnoDTO.ClienteNombre}. Estado: {turnoDTO.Estado}",
-                turnoDTO
-            );
+            await _notificationsService.SendNotificationAsync(turno.Barbero.NotificationToken, turnoDTO);
         }
 
         return true;
@@ -167,12 +147,7 @@ public class TurnoService : ITurnoService
 
     public async Task EnviarNotificacionManualAsync(string token, TurnoDTO turnoDTO)
     {
-        await _notificationsService.SendNotificationAsync(
-            token,
-            "Notificación Manual",
-            "Tienes un nuevo turno asignado manualmente",
-            turnoDTO
-        );
+        await _notificationsService.SendNotificationAsync(token, turnoDTO);
     }
 
     public async Task<List<HorarioTurnoDTO>> ObtenerHorariosReservadosPorBarberoYFechaAsync(int barberoId, DateTime fecha)
