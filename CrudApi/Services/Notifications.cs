@@ -39,12 +39,19 @@ namespace CrudApi.Notifications
                 Console.WriteLine("ℹ️ FirebaseApp ya estaba inicializado.");
             }
         }
-        public async Task<string> SendNotificationAsync(string token, string title, string body, TurnoDTO turno)
+        public async Task<string> SendNotificationAsync(string token, TurnoDTO turno)
         {
             if (FirebaseMessaging.DefaultInstance == null)
-            {
                 throw new InvalidOperationException("❌ FirebaseMessaging.DefaultInstance no está inicializado.");
-            }
+
+            var cultura = new System.Globalization.CultureInfo("es-CO");
+
+            // 🧠 Formatea la fecha con zona horaria y en español
+            var fechaFormateada = turno.FechaHoraInicio.ToLocalTime()
+                .ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
+
+            string title = "Turno Confirmado";
+            string body = $"Tu turno fue agendado para el {fechaFormateada}. Servicio: {turno.ServicioNombre}";
 
             var message = new Message()
             {
@@ -55,20 +62,21 @@ namespace CrudApi.Notifications
                     Body = body
                 },
                 Data = new Dictionary<string, string>
-                {
-                    { "TurnoId", turno.Id.ToString() },
-                    { "BarberoId", turno.BarberoId.ToString() },
-                    { "ClienteId", turno.ClienteId.ToString() },
-                    { "FechaHoraInicio", turno.FechaHoraInicio.ToString("s") },
-                    { "Estado", turno.Estado.ToString() },
-                    { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
-                    { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
-                    { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
-                    { "Duracion", turno.Duracion.ToString() }
-                }
+        {
+            { "TurnoId", turno.Id.ToString() },
+            { "BarberoId", turno.BarberoId.ToString() },
+            { "ClienteId", turno.ClienteId.ToString() },
+            { "FechaHoraInicio", turno.FechaHoraInicio.ToString("s") },
+            { "Estado", turno.Estado.ToString() },
+            { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
+            { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
+            { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
+            { "Duracion", turno.Duracion.ToString() }
+        }
             };
 
             return await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
+
     }
 }
