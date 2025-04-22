@@ -8,6 +8,7 @@ public class TurnoService : ITurnoService
 {
     private readonly Notifications _notificationsService;
     private readonly ApplicationDbContext _context;
+    private readonly TimeZoneInfo _zonaColombia = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
 
     public TurnoService(ApplicationDbContext context, Notifications notificationsService)
     {
@@ -18,8 +19,7 @@ public class TurnoService : ITurnoService
     public async Task<List<TurnoDTO>> ObtenerTurnosAsync(int? barberoId)
     {
         var query = _context.Turnos
-            .Include(t => t.Cliente)
-                .ThenInclude(c => c.Usuario)
+            .Include(t => t.Cliente).ThenInclude(c => c.Usuario)
             .Include(t => t.Servicio)
             .AsQueryable();
 
@@ -30,41 +30,21 @@ public class TurnoService : ITurnoService
 
         var turnos = await query.ToListAsync();
 
-        var dtoList = turnos.Select(turno => new TurnoDTO
-        {
-            Id = turno.Id,
-            BarberoId = turno.BarberoId,
-            ServicioId = turno.ServicioId,
-            ClienteId = turno.ClienteId,
-            FechaHoraInicio = turno.FechaHoraInicio,
-            HoraFin = turno.FechaHoraInicio.Add(turno.Duracion),
-            Fecha = turno.FechaHoraInicio.Date,
-            Duracion = turno.Duracion,
-            Estado = turno.Estado,
-
-            ClienteNombre = turno.Cliente?.Usuario?.Nombre ?? string.Empty,
-            ClienteApellido = turno.Cliente?.Apellido ?? string.Empty,
-            ClienteEmail = turno.Cliente?.Usuario?.Correo ?? string.Empty,
-            ClienteFechaNacimiento = turno.Cliente?.FechaNacimiento ?? DateTime.MinValue,
-
-            ServicioNombre = turno.Servicio?.Nombre ?? string.Empty,
-            ServicioDescripcion = turno.Servicio?.Descripcion ?? string.Empty,
-            ServicioPrecio = turno.Servicio?.Precio ?? 0,
-            ServicioPrecioEspecial = turno.Servicio?.PrecioEspecial
-        }).ToList();
-
-        return dtoList;
+        return turnos.Select(t => MapTurnoToDTO(t)).ToList();
     }
 
     public async Task<TurnoDTO> CrearTurnoAsync(TurnoCreateDTO turnoCreateDTO)
     {
+        // ✅ Convertir hora a hora Colombia antes de guardar
+        var fechaLocal = TimeZoneInfo.ConvertTimeFromUtc(turnoCreateDTO.FechaHoraInicio.ToUniversalTime(), _zonaColombia);
+
         var turno = new Turno
         {
-            Fecha = turnoCreateDTO.FechaHoraInicio,
+            Fecha = fechaLocal,
             BarberoId = turnoCreateDTO.BarberoId,
             ClienteId = turnoCreateDTO.ClienteId,
             ServicioId = turnoCreateDTO.ServicioId,
-            FechaHoraInicio = turnoCreateDTO.FechaHoraInicio,
+            FechaHoraInicio = fechaLocal,
             Duracion = TimeSpan.FromMinutes(turnoCreateDTO.Duracion),
             Estado = EstadoTurno.Pendiente
         };
@@ -88,7 +68,6 @@ public class TurnoService : ITurnoService
         if (turno == null)
             throw new Exception("❌ No se encontró el turno.");
 
-        // ⚠️ Ya fue notificado, evita duplicados
         if (turno.Notificado)
         {
             Console.WriteLine($"⛔ Turno {turno.Id} ya fue notificado.");
@@ -100,15 +79,15 @@ public class TurnoService : ITurnoService
 
         var turnoDTO = MapTurnoToDTO(turno);
 
-         if (!string.IsNullOrWhiteSpace(tokenCliente))
-                {
-                    await _notificationsService.SendNotificationAsync(
-             tokenCliente,
-             "Turno Confirmado",
-             $"Tu turno con {turnoDTO.BarberoNombre} fue agendado para el {turnoDTO.FechaHoraInicio:dddd dd/MM/yyyy} a las {turnoDTO.FechaHoraInicio:hh:mm tt}.\nServicio: {turnoDTO.ServicioNombre}",
-             turnoDTO
-         );
-                }
+        if (!string.IsNullOrWhiteSpace(tokenCliente))
+        {
+            await _notificationsService.SendNotificationAsync(
+                tokenCliente,
+                "Turno Confirmado",
+                $"Tu turno con {turnoDTO.BarberoNombre} fue agendado para el {turnoDTO.FechaHoraInicio:dddd dd/MM/yyyy} a las {turnoDTO.FechaHoraInicio:hh:mm tt}.\nServicio: {turnoDTO.ServicioNombre}",
+                turnoDTO
+            );
+        }
 
         if (!string.IsNullOrWhiteSpace(tokenBarbero))
         {
@@ -120,7 +99,6 @@ public class TurnoService : ITurnoService
             );
         }
 
-        // ✅ Marcar como notificado
         turno.Notificado = true;
         await _context.SaveChangesAsync();
 
@@ -152,20 +130,18 @@ public class TurnoService : ITurnoService
 
         await _context.SaveChangesAsync();
 
-        // ✅ TurnoDTO común para ambas notificaciones
         var turnoDTO = new TurnoDTO
         {
             Id = turno.Id,
             Estado = turno.Estado,
             ClienteNombre = turno.Cliente?.Usuario?.Nombre ?? "",
             ClienteApellido = turno.Cliente?.Apellido ?? "",
-            FechaHoraInicio = turno.FechaHoraInicio,
+            FechaHoraInicio = TimeZoneInfo.ConvertTimeFromUtc(turno.FechaHoraInicio, _zonaColombia),
             Duracion = turno.Duracion,
             BarberoId = turno.BarberoId,
             ServicioNombre = turno.Servicio?.Nombre ?? ""
         };
 
-        // ✅ Notificación al Cliente
         if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
         {
             await _notificationsService.SendNotificationAsync(
@@ -176,7 +152,6 @@ public class TurnoService : ITurnoService
             );
         }
 
-        // ✅ Notificación al Barbero (para que se actualice en su frontend también)
         if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
         {
             await _notificationsService.SendNotificationAsync(
@@ -189,7 +164,6 @@ public class TurnoService : ITurnoService
 
         return true;
     }
-
 
     public async Task EnviarNotificacionManualAsync(string token, TurnoDTO turnoDTO)
     {
@@ -215,7 +189,7 @@ public class TurnoService : ITurnoService
 
         return turnos.Select(t => new HorarioTurnoDTO
         {
-            Inicio = t.FechaHoraInicio.ToString("HH:mm"),
+            Inicio = TimeZoneInfo.ConvertTimeFromUtc(t.FechaHoraInicio, _zonaColombia).ToString("HH:mm"),
             Duracion = (int)t.Duracion.TotalMinutes
         }).ToList();
     }
@@ -235,15 +209,17 @@ public class TurnoService : ITurnoService
 
     private TurnoDTO MapTurnoToDTO(Turno turno)
     {
+        var fechaLocal = TimeZoneInfo.ConvertTimeFromUtc(turno.FechaHoraInicio, _zonaColombia);
+
         return new TurnoDTO
         {
             Id = turno.Id,
             BarberoId = turno.BarberoId,
             ServicioId = turno.ServicioId,
             ClienteId = turno.ClienteId,
-            FechaHoraInicio = turno.FechaHoraInicio,
-            HoraFin = turno.FechaHoraInicio.Add(turno.Duracion),
-            Fecha = turno.FechaHoraInicio.Date,
+            FechaHoraInicio = fechaLocal,
+            HoraFin = fechaLocal.Add(turno.Duracion),
+            Fecha = fechaLocal.Date,
             Duracion = turno.Duracion,
             Estado = turno.Estado,
             ClienteNombre = turno.Cliente?.Usuario?.Nombre ?? string.Empty,
@@ -256,7 +232,4 @@ public class TurnoService : ITurnoService
             ServicioPrecioEspecial = turno.Servicio?.PrecioEspecial
         };
     }
-
-
-
 }
