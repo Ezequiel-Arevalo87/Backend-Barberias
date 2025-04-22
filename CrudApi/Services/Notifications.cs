@@ -48,10 +48,13 @@ namespace CrudApi.Notifications
 
             var cultura = new CultureInfo("es-CO");
 
-            
-            var fechaLocal = turno.FechaHoraInicio; // Ya viene en hora Colombia
 
+            // 🧠 Forzar conversión UTC → Hora Colombia
+            var zonaColombia = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+            var fechaUTC = DateTime.SpecifyKind(turno.FechaHoraInicio, DateTimeKind.Utc);
+            var fechaLocal = TimeZoneInfo.ConvertTimeFromUtc(fechaUTC, zonaColombia);
 
+            // 🗓 Formatear fecha en español colombiano
             string fechaFormateada = fechaLocal.ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
 
             string title = "Turno Confirmado";
