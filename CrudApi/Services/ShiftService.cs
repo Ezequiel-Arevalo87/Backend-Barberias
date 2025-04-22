@@ -69,12 +69,8 @@ public class ShiftService : IShiftService
                         ServicioPrecioEspecial = turno.Servicio?.PrecioEspecial
                     };
 
-                    await _notifications.SendNotificationAsync(
-                        tokenBarbero,
-                        $"Turno {nuevoEstado}",
-                        $"El turno con {turnoDTO.ClienteNombre} está ahora en estado: {nuevoEstado}",
-                        turnoDTO
-                    );
+                    await _notifications.SendNotificationAsync(tokenBarbero, turnoDTO);
+
                 }
             }
         }
