@@ -48,8 +48,8 @@ namespace CrudApi.Notifications
 
             var cultura = new CultureInfo("es-CO");
 
-            // 🔽 Restar 2 horas
-            var fechaLocal = turno.FechaHoraInicio.AddHours(-2);
+            // 🔼 Sumar 9 horas
+            var fechaLocal = turno.FechaHoraInicio.AddHours(9);
 
             // 🗓 Formatear fecha en español colombiano
             string fechaFormateada = fechaLocal.ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
@@ -70,7 +70,7 @@ namespace CrudApi.Notifications
             { "TurnoId", turno.Id.ToString() },
             { "BarberoId", turno.BarberoId.ToString() },
             { "ClienteId", turno.ClienteId.ToString() },
-            { "FechaHoraInicio", turno.FechaHoraInicio.ToString("s") },
+            { "FechaHoraInicio", fechaLocal.ToString("s") }, // también se suma en el campo data
             { "Estado", turno.Estado.ToString() },
             { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
             { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
