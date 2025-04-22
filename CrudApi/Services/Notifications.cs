@@ -47,7 +47,10 @@ namespace CrudApi.Notifications
                 throw new InvalidOperationException("❌ FirebaseMessaging.DefaultInstance no está inicializado.");
 
             var cultura = new CultureInfo("es-CO");
-            var fechaLocal = turno.FechaHoraInicio.ToLocalTime();
+
+            // ✅ Conversión precisa a zona horaria de Colombia
+            var zonaColombia = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+            var fechaLocal = TimeZoneInfo.ConvertTimeFromUtc(turno.FechaHoraInicio.ToUniversalTime(), zonaColombia);
 
             string fechaFormateada = fechaLocal.ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
 
