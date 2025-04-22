@@ -49,7 +49,7 @@ namespace CrudApi.Notifications
             var cultura = new CultureInfo("es-CO");
 
             // 🔼 Sumar 9 horas
-            var fechaLocal = turno.FechaHoraInicio.AddHours(9);
+            var fechaLocal = turno.FechaHoraInicio.AddHours(10);
 
             // 🗓 Formatear fecha en español colombiano
             string fechaFormateada = fechaLocal.ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
