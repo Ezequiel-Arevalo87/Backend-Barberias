@@ -36,15 +36,16 @@ public class TurnoService : ITurnoService
 
     public async Task<TurnoDTO> CrearTurnoAsync(TurnoCreateDTO turnoCreateDTO)
     {
-        var fechaLocal = TimeZoneInfo.ConvertTimeFromUtc(turnoCreateDTO.FechaHoraInicio.ToUniversalTime(), _zonaColombia);
+        // ✅ Guardar en UTC sin alterar la hora enviada
+        var fechaUtc = DateTime.SpecifyKind(turnoCreateDTO.FechaHoraInicio, DateTimeKind.Utc);
 
         var turno = new Turno
         {
-            Fecha = fechaLocal,
+            Fecha = fechaUtc,
             BarberoId = turnoCreateDTO.BarberoId,
             ClienteId = turnoCreateDTO.ClienteId,
             ServicioId = turnoCreateDTO.ServicioId,
-            FechaHoraInicio = fechaLocal,
+            FechaHoraInicio = fechaUtc,
             Duracion = TimeSpan.FromMinutes(turnoCreateDTO.Duracion),
             Estado = EstadoTurno.Pendiente
         };
@@ -105,7 +106,7 @@ public class TurnoService : ITurnoService
 
         if (turno == null) return false;
 
-        var minutosRestantes = (turno.FechaHoraInicio - DateTime.Now).TotalMinutes;
+        var minutosRestantes = (turno.FechaHoraInicio - DateTime.UtcNow).TotalMinutes;
 
         if (dto.Rol == "Cliente")
         {

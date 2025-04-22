@@ -48,8 +48,10 @@ namespace CrudApi.Notifications
 
             var cultura = new CultureInfo("es-CO");
 
-            // 🔼 Sumar 9 horas
-            var fechaLocal = turno.FechaHoraInicio.AddHours(10);
+            // ✅ Convertir de UTC a hora Colombia de forma segura
+            var zonaColombia = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+            var fechaUtc = DateTime.SpecifyKind(turno.FechaHoraInicio, DateTimeKind.Utc);
+            var fechaLocal = TimeZoneInfo.ConvertTimeFromUtc(fechaUtc, zonaColombia);
 
             // 🗓 Formatear fecha en español colombiano
             string fechaFormateada = fechaLocal.ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
@@ -70,7 +72,7 @@ namespace CrudApi.Notifications
             { "TurnoId", turno.Id.ToString() },
             { "BarberoId", turno.BarberoId.ToString() },
             { "ClienteId", turno.ClienteId.ToString() },
-            { "FechaHoraInicio", fechaLocal.ToString("s") }, // también se suma en el campo data
+            { "FechaHoraInicio", fechaLocal.ToString("s") },
             { "Estado", turno.Estado.ToString() },
             { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
             { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
