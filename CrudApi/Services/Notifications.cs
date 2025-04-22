@@ -40,7 +40,6 @@ namespace CrudApi.Notifications
                 Console.WriteLine("ℹ️ FirebaseApp ya estaba inicializado.");
             }
         }
-
         public async Task<string> SendNotificationAsync(string token, TurnoDTO turno)
         {
             if (FirebaseMessaging.DefaultInstance == null)
@@ -48,14 +47,10 @@ namespace CrudApi.Notifications
 
             var cultura = new CultureInfo("es-CO");
 
-            // ✅ Convertir de UTC a hora Colombia de forma segura
-            var zonaColombia = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
-            var fechaUtc = DateTime.SpecifyKind(turno.FechaHoraInicio, DateTimeKind.Utc);
-            var fechaLocal = TimeZoneInfo.ConvertTimeFromUtc(fechaUtc, zonaColombia);
+            // ✅ Ya es hora local, así que usar directo
+            var fechaLocal = turno.FechaHoraInicio;
 
-            // 🗓 Formatear fecha en español colombiano
             string fechaFormateada = fechaLocal.ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
-
             string title = "Turno Confirmado";
             string body = $"Tu turno fue agendado para el {fechaFormateada}. Servicio: {turno.ServicioNombre}";
 
@@ -72,7 +67,7 @@ namespace CrudApi.Notifications
             { "TurnoId", turno.Id.ToString() },
             { "BarberoId", turno.BarberoId.ToString() },
             { "ClienteId", turno.ClienteId.ToString() },
-            { "FechaHoraInicio", fechaLocal.ToString("s") },
+            { "FechaHoraInicio", turno.FechaHoraInicio.ToString("s") }, // formato ISO sin tocar
             { "Estado", turno.Estado.ToString() },
             { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
             { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
@@ -83,7 +78,6 @@ namespace CrudApi.Notifications
 
             return await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
-
 
     }
 }

@@ -36,16 +36,16 @@ public class TurnoService : ITurnoService
 
     public async Task<TurnoDTO> CrearTurnoAsync(TurnoCreateDTO turnoCreateDTO)
     {
-        // ✅ Asumimos que ya viene en hora local Colombia
-        var fechaLocal = turnoCreateDTO.FechaHoraInicio;
+        // ✅ NO convertir a UTC, simplemente tomar como hora local la que viene
+        var fechaColombia = turnoCreateDTO.FechaHoraInicio;
 
         var turno = new Turno
         {
-            Fecha = fechaLocal,
+            Fecha = fechaColombia,
             BarberoId = turnoCreateDTO.BarberoId,
             ClienteId = turnoCreateDTO.ClienteId,
             ServicioId = turnoCreateDTO.ServicioId,
-            FechaHoraInicio = fechaLocal,
+            FechaHoraInicio = fechaColombia,
             Duracion = TimeSpan.FromMinutes(turnoCreateDTO.Duracion),
             Estado = EstadoTurno.Pendiente
         };
@@ -185,6 +185,7 @@ public class TurnoService : ITurnoService
 
     private TurnoDTO MapTurnoToDTO(Turno turno)
     {
+        // ✅ Ya está guardado en hora local, así que NO convertir desde UTC
         var fechaLocal = turno.FechaHoraInicio;
 
         return new TurnoDTO
@@ -208,5 +209,4 @@ public class TurnoService : ITurnoService
             ServicioPrecioEspecial = turno.Servicio?.PrecioEspecial
         };
     }
-
 }
