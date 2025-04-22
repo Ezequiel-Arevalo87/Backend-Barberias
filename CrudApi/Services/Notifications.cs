@@ -48,8 +48,8 @@ namespace CrudApi.Notifications
 
             var cultura = new CultureInfo("es-CO");
 
-            // ✅ Ya viene en hora Colombia → NO convertir como UTC
-            var fechaLocal = turno.FechaHoraInicio;
+            // 🔽 Restar 2 horas
+            var fechaLocal = turno.FechaHoraInicio.AddHours(-2);
 
             // 🗓 Formatear fecha en español colombiano
             string fechaFormateada = fechaLocal.ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
@@ -81,6 +81,7 @@ namespace CrudApi.Notifications
 
             return await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
+
 
     }
 }
