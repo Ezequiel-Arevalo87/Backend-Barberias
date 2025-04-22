@@ -48,9 +48,9 @@ namespace CrudApi.Notifications
 
             var cultura = new CultureInfo("es-CO");
 
-            // ✅ Conversión precisa a zona horaria de Colombia
-            var zonaColombia = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
-            var fechaLocal = TimeZoneInfo.ConvertTimeFromUtc(turno.FechaHoraInicio.ToUniversalTime(), zonaColombia);
+            
+            var fechaLocal = turno.FechaHoraInicio; // Ya viene en hora Colombia
+
 
             string fechaFormateada = fechaLocal.ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
 
