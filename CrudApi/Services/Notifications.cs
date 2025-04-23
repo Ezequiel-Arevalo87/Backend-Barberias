@@ -67,7 +67,7 @@ namespace CrudApi.Notifications
             { "TurnoId", turno.Id.ToString() },
             { "BarberoId", turno.BarberoId.ToString() },
             { "ClienteId", turno.ClienteId.ToString() },
-            { "FechaHoraInicio", turno.FechaHoraInicio.ToString("s") }, // formato ISO sin tocar
+            {  "FechaHoraInicio", turno.FechaHoraInicio.ToString("yyyy-MM-dd HH:mm:ss") },
             { "Estado", turno.Estado.ToString() },
             { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
             { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
