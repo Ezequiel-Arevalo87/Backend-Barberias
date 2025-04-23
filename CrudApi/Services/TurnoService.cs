@@ -34,8 +34,10 @@ public class TurnoService : ITurnoService
 
     public async Task<TurnoDTO> CrearTurnoAsync(TurnoCreateDTO turnoCreateDTO)
     {
-        var fechaColombia = turnoCreateDTO.FechaHoraInicio;
+        //var fechaColombia = turnoCreateDTO.FechaHoraInicio;
         var duracion = TimeSpan.FromMinutes(turnoCreateDTO.Duracion);
+        var fechaColombia = DateTime.SpecifyKind(turnoCreateDTO.FechaHoraInicio, DateTimeKind.Local);
+
 
         var turno = new Turno
         {
