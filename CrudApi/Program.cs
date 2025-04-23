@@ -53,11 +53,17 @@ builder.Services.AddHangfire(config =>
 builder.Services.AddHangfireServer();
 
 // 🔹 Configurar controladores y opciones JSON
-builder.Services.AddControllers().AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.Converters.Add(new JsonDateConverter());
-    options.JsonSerializerOptions.WriteIndented = true;
-});
+//builder.Services.AddControllers().AddJsonOptions(options =>
+//{
+//    options.JsonSerializerOptions.Converters.Add(new JsonDateConverter());
+//    options.JsonSerializerOptions.WriteIndented = true;
+//});
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonDateTimeConverter());
+    });
 
 builder.Services.AddEndpointsApiExplorer();
 
