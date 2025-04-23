@@ -2,9 +2,8 @@
 using CrudApi.DTOs;
 using CrudApi.Models;
 using CrudApi.Notifications;
-using Microsoft.EntityFrameworkCore;         // Necesario para Include, ThenInclude y ToListAsync
-using System.Linq;                           // Necesario para IQueryable
-
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 public class TurnoService : ITurnoService
 {
@@ -30,13 +29,12 @@ public class TurnoService : ITurnoService
         }
 
         var turnos = await query.ToListAsync();
-
         return turnos.Select(t => MapTurnoToDTO(t)).ToList();
     }
 
     public async Task<TurnoDTO> CrearTurnoAsync(TurnoCreateDTO turnoCreateDTO)
     {
-        // ✅ Guardar la hora tal como viene desde el frontend (ya en hora local Colombia)
+        // ✅ Guardar la hora tal cual la recibe (ya en hora local Colombia)
         var fechaColombia = turnoCreateDTO.FechaHoraInicio;
 
         var turno = new Turno
@@ -53,8 +51,7 @@ public class TurnoService : ITurnoService
         _context.Turnos.Add(turno);
         await _context.SaveChangesAsync();
 
-        var turnoConDatos = await NotificarTurnoAsync(new TurnoDTO { Id = turno.Id });
-        return turnoConDatos;
+        return await NotificarTurnoAsync(new TurnoDTO { Id = turno.Id });
     }
 
     public async Task<TurnoDTO> NotificarTurnoAsync(TurnoDTO turnoInput)
@@ -77,14 +74,10 @@ public class TurnoService : ITurnoService
         var turnoDTO = MapTurnoToDTO(turno);
 
         if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
-        {
             await _notificationsService.SendNotificationAsync(turno.Cliente.NotificationToken, turnoDTO);
-        }
 
         if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
-        {
             await _notificationsService.SendNotificationAsync(turno.Barbero.NotificationToken, turnoDTO);
-        }
 
         turno.Notificado = true;
         await _context.SaveChangesAsync();
@@ -120,14 +113,10 @@ public class TurnoService : ITurnoService
         var turnoDTO = MapTurnoToDTO(turno);
 
         if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
-        {
             await _notificationsService.SendNotificationAsync(turno.Cliente.NotificationToken, turnoDTO);
-        }
 
         if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
-        {
             await _notificationsService.SendNotificationAsync(turno.Barbero.NotificationToken, turnoDTO);
-        }
 
         return true;
     }
@@ -177,7 +166,7 @@ public class TurnoService : ITurnoService
             BarberoId = turno.BarberoId,
             ServicioId = turno.ServicioId,
             ClienteId = turno.ClienteId,
-            FechaHoraInicio = turno.FechaHoraInicio, // ✅ No convertir
+            FechaHoraInicio = turno.FechaHoraInicio,
             HoraFin = turno.FechaHoraInicio.Add(turno.Duracion),
             Fecha = turno.FechaHoraInicio.Date,
             Duracion = turno.Duracion,
