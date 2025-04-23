@@ -47,12 +47,15 @@ namespace CrudApi.Notifications
 
             var cultura = new CultureInfo("es-CO");
 
-            // ✅ Ya es hora local, así que usar directo
-            var fechaLocal = turno.FechaHoraInicio;
+            // ✅ Ajuste manual para evitar que Firebase lo interprete como UTC
+            var fechaLocal = turno.FechaHoraInicio.AddHours(-5);
 
+            // 🗓 Formato en español colombiano con hora corregida
             string fechaFormateada = fechaLocal.ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
+
             string title = "Turno Confirmado";
             string body = $"Tu turno fue agendado para el {fechaFormateada}. Servicio: {turno.ServicioNombre}";
+
 
             var message = new Message()
             {
