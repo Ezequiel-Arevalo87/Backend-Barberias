@@ -34,8 +34,8 @@ public class TurnoService : ITurnoService
 
     public async Task<TurnoDTO> CrearTurnoAsync(TurnoCreateDTO turnoCreateDTO)
     {
-        // ✅ Guardar la hora tal cual la recibe (ya en hora local Colombia)
         var fechaColombia = turnoCreateDTO.FechaHoraInicio;
+        var duracion = TimeSpan.FromMinutes(turnoCreateDTO.Duracion);
 
         var turno = new Turno
         {
@@ -44,7 +44,8 @@ public class TurnoService : ITurnoService
             ClienteId = turnoCreateDTO.ClienteId,
             ServicioId = turnoCreateDTO.ServicioId,
             FechaHoraInicio = fechaColombia,
-            Duracion = TimeSpan.FromMinutes(turnoCreateDTO.Duracion),
+            HoraFin = fechaColombia.Add(duracion), // ✅ Esta línea es la clave
+            Duracion = duracion,
             Estado = EstadoTurno.Pendiente
         };
 
@@ -53,6 +54,7 @@ public class TurnoService : ITurnoService
 
         return await NotificarTurnoAsync(new TurnoDTO { Id = turno.Id });
     }
+
 
     public async Task<TurnoDTO> NotificarTurnoAsync(TurnoDTO turnoInput)
     {
