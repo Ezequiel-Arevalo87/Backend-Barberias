@@ -1,5 +1,4 @@
 ﻿using CrudApi.DTOs;
-using CrudApi.Models;
 using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
@@ -74,52 +73,12 @@ namespace CrudApi.Notifications
             { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
             { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
             { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
-            { "Duracion", turno.Duracion.ToString() },
-            { "Tipo", "Cancelacion" },
-             { "TurnoId", turno.Id.ToString() },
-                 { "NuevoEstado", ((int)EstadoTurno.Cancelado).ToString() }
+            { "Duracion", turno.Duracion.ToString() }
         }
             };
 
             return await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
-
-        public async Task<string> SendCancelacionClienteAsync(string token, TurnoDTO turno)
-        {
-            var cultura = new CultureInfo("es-CO");
-            string fechaFormateada = turno.FechaHoraInicio.AddHours(-5).ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
-
-            var message = new Message()
-            {
-                Token = token,
-                Notification = new Notification
-                {
-                    Title = "Turno Cancelado por el Cliente",
-                    Body = $"El cliente {turno.ClienteNombre} canceló su turno programado para el {fechaFormateada}.\n📝 Motivo: {turno.MotivoCancelacion}"
-                }
-            };
-
-            return await FirebaseMessaging.DefaultInstance.SendAsync(message);
-        }
-
-        public async Task<string> SendCancelacionBarberoAsync(string token, TurnoDTO turno)
-        {
-            var cultura = new CultureInfo("es-CO");
-            string fechaFormateada = turno.FechaHoraInicio.AddHours(-5).ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
-
-            var message = new Message()
-            {
-                Token = token,
-                Notification = new Notification
-                {
-                    Title = "Turno Cancelado por el Barbero",
-                    Body = $"Tu turno del {fechaFormateada} fue cancelado por el barbero. Motivo: {turno.MotivoCancelacion}"
-                }
-            };
-
-            return await FirebaseMessaging.DefaultInstance.SendAsync(message);
-        }
-
 
     }
 }
