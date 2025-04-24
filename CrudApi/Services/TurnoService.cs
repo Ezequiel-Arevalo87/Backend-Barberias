@@ -116,14 +116,28 @@ public class TurnoService : ITurnoService
 
         var turnoDTO = MapTurnoToDTO(turno);
 
-        if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
-            await _notificationsService.SendNotificationAsync(turno.Cliente.NotificationToken, turnoDTO);
+        // 🔔 Enviar notificaciones según el estado final del turno
+        if (turno.Estado == EstadoTurno.Cancelado)
+        {
+            if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
+                await _notificationsService.EnviarNotificacionCancelacionClienteAsync(turno.Cliente.NotificationToken, turnoDTO, dto.Motivo);
 
-        if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
-            await _notificationsService.SendNotificationAsync(turno.Barbero.NotificationToken, turnoDTO);
+            if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
+                await _notificationsService.EnviarNotificacionCancelacionBarberoAsync(turno.Barbero.NotificationToken, turnoDTO, dto.Motivo);
+        }
+        else if (turno.Estado == EstadoTurno.Disponible)
+        {
+            // Si el turno se restauró y quedó disponible, notifica normalmente
+            if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
+                await _notificationsService.SendNotificationAsync(turno.Cliente.NotificationToken, turnoDTO);
+
+            if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
+                await _notificationsService.SendNotificationAsync(turno.Barbero.NotificationToken, turnoDTO);
+        }
 
         return true;
     }
+
 
     public async Task EnviarNotificacionManualAsync(string token, TurnoDTO turnoDTO)
     {
