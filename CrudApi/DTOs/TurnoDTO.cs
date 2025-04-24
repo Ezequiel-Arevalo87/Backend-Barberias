@@ -21,5 +21,7 @@ public class TurnoDTO
     public decimal? ServicioPrecioEspecial { get; set; }
     public string BarberoNombre { get; set; }
     public string MotivoCancelacion { get; set; }
+    public string BarberiaNombre { get; set; } // ✅ Nuevo campo
+
 
 }

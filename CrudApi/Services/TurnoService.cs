@@ -161,6 +161,7 @@ public class TurnoService : ITurnoService
             .Include(t => t.Cliente).ThenInclude(c => c.Usuario)
             .Include(t => t.Servicio)
             .Include(t => t.Barbero).ThenInclude(b => b.Usuario)
+            .Include(t => t.Barbero).ThenInclude(b => b.Barberia) // ✅ Incluir barbería
             .OrderByDescending(t => t.FechaHoraInicio)
             .ToListAsync();
 
@@ -188,7 +189,10 @@ public class TurnoService : ITurnoService
             ServicioDescripcion = turno.Servicio?.Descripcion ?? string.Empty,
             ServicioPrecio = turno.Servicio?.Precio ?? 0,
             ServicioPrecioEspecial = turno.Servicio?.PrecioEspecial,
-            MotivoCancelacion = turno.MotivoCancelacion ?? string.Empty
+            MotivoCancelacion = turno.MotivoCancelacion ?? string.Empty,
+            BarberoNombre = turno.Barbero?.Usuario?.Nombre ?? string.Empty,
+            BarberiaNombre = turno.Barbero?.Barberia?.Usuario?.Nombre ?? string.Empty, 
+           
         };
     }
 }
