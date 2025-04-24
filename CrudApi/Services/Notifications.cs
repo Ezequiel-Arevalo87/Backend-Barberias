@@ -113,8 +113,7 @@ namespace CrudApi.Notifications
                     { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
                     { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
                     { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
-                    { "Duracion", turno.Duracion.ToString() },
-                    { "motivoCancelacion", turno.MotivoCancelacion.ToString() }
+                    { "Duracion", turno.Duracion.ToString() }
                 }
             };
 
