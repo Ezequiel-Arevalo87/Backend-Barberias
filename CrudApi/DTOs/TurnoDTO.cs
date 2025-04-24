@@ -20,5 +20,6 @@ public class TurnoDTO
     public decimal ServicioPrecio { get; set; }
     public decimal? ServicioPrecioEspecial { get; set; }
     public string BarberoNombre { get; set; }
+    public string MotivoCancelacion { get; set; }
 
 }

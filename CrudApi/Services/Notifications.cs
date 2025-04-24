@@ -80,5 +80,42 @@ namespace CrudApi.Notifications
             return await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
 
+        public async Task<string> SendCancelacionClienteAsync(string token, TurnoDTO turno)
+        {
+            var cultura = new CultureInfo("es-CO");
+            string fechaFormateada = turno.FechaHoraInicio.ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
+
+            var message = new Message()
+            {
+                Token = token,
+                Notification = new Notification
+                {
+                    Title = "Turno Cancelado por el Cliente",
+                    Body = $"El cliente {turno.ClienteNombre} canceló su turno programado para el {fechaFormateada}.\n📝 Motivo: {turno.MotivoCancelacion}"
+                }
+            };
+
+            return await FirebaseMessaging.DefaultInstance.SendAsync(message);
+        }
+
+        public async Task<string> SendCancelacionBarberoAsync(string token, TurnoDTO turno)
+        {
+            var cultura = new CultureInfo("es-CO");
+            string fechaFormateada = turno.FechaHoraInicio.ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
+
+            var message = new Message()
+            {
+                Token = token,
+                Notification = new Notification
+                {
+                    Title = "Turno Cancelado por el Barbero",
+                    Body = $"Tu turno del {fechaFormateada} fue cancelado por el barbero. Motivo: {turno.MotivoCancelacion}"
+                }
+            };
+
+            return await FirebaseMessaging.DefaultInstance.SendAsync(message);
+        }
+
+
     }
 }

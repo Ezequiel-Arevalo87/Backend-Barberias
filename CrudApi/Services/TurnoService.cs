@@ -112,18 +112,23 @@ public class TurnoService : ITurnoService
             turno.Estado = dto.Restaurar && minutosRestantes >= 20 ? EstadoTurno.Disponible : EstadoTurno.Cancelado;
         }
 
+        var turnoDTO = MapTurnoToDTO(turno); // 👈 Mover esto arriba de las notificaciones
+
+        if (dto.Rol == "Cliente" && !string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
+        {
+            await _notificationsService.SendCancelacionClienteAsync(turno.Barbero.NotificationToken, turnoDTO);
+        }
+
+        if (dto.Rol == "Barbero" && !string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
+        {
+            await _notificationsService.SendCancelacionBarberoAsync(turno.Cliente.NotificationToken, turnoDTO);
+        }
+
         await _context.SaveChangesAsync();
-
-        var turnoDTO = MapTurnoToDTO(turno);
-
-        if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
-            await _notificationsService.SendNotificationAsync(turno.Cliente.NotificationToken, turnoDTO);
-
-        if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
-            await _notificationsService.SendNotificationAsync(turno.Barbero.NotificationToken, turnoDTO);
 
         return true;
     }
+
 
     public async Task EnviarNotificacionManualAsync(string token, TurnoDTO turnoDTO)
     {
@@ -182,7 +187,8 @@ public class TurnoService : ITurnoService
             ServicioNombre = turno.Servicio?.Nombre ?? string.Empty,
             ServicioDescripcion = turno.Servicio?.Descripcion ?? string.Empty,
             ServicioPrecio = turno.Servicio?.Precio ?? 0,
-            ServicioPrecioEspecial = turno.Servicio?.PrecioEspecial
+            ServicioPrecioEspecial = turno.Servicio?.PrecioEspecial,
+            MotivoCancelacion = turno.MotivoCancelacion ?? string.Empty
         };
     }
 }
