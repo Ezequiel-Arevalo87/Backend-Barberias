@@ -117,7 +117,7 @@ public class TurnoService : ITurnoService
     var turnoDTO = MapTurnoToDTO(turno);
 
     // 🔔 Enviar notificaciones según el estado final del turno
-    if (turno.Estado == EstadoTurno.Cancelado)
+    if (turno.Estado == EstadoTurno.Cancelado || turno.Estado == EstadoTurno.Disponible)
     {
         if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
             await _notificationsService.EnviarNotificacionCancelacionClienteAsync(turno.Cliente.NotificationToken, turnoDTO, dto.Motivo);
