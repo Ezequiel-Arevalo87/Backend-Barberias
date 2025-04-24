@@ -34,8 +34,10 @@ public class TurnoService : ITurnoService
 
     public async Task<TurnoDTO> CrearTurnoAsync(TurnoCreateDTO turnoCreateDTO)
     {
+        //var fechaColombia = turnoCreateDTO.FechaHoraInicio;
         var duracion = TimeSpan.FromMinutes(turnoCreateDTO.Duracion);
         var fechaColombia = DateTime.SpecifyKind(turnoCreateDTO.FechaHoraInicio, DateTimeKind.Local);
+
 
         var turno = new Turno
         {
@@ -44,7 +46,7 @@ public class TurnoService : ITurnoService
             ClienteId = turnoCreateDTO.ClienteId,
             ServicioId = turnoCreateDTO.ServicioId,
             FechaHoraInicio = fechaColombia,
-            HoraFin = fechaColombia.Add(duracion),
+            HoraFin = fechaColombia.Add(duracion), // ✅ Esta línea es la clave
             Duracion = duracion,
             Estado = EstadoTurno.Pendiente
         };
@@ -54,6 +56,7 @@ public class TurnoService : ITurnoService
 
         return await NotificarTurnoAsync(new TurnoDTO { Id = turno.Id });
     }
+
 
     public async Task<TurnoDTO> NotificarTurnoAsync(TurnoDTO turnoInput)
     {
@@ -109,7 +112,7 @@ public class TurnoService : ITurnoService
             turno.Estado = dto.Restaurar && minutosRestantes >= 20 ? EstadoTurno.Disponible : EstadoTurno.Cancelado;
         }
 
-        var turnoDTO = MapTurnoToDTO(turno); // Asegurado que ya contiene todo actualizado
+        var turnoDTO = MapTurnoToDTO(turno); // 👈 Mover esto arriba de las notificaciones
 
         if (dto.Rol == "Cliente" && !string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
         {
@@ -125,6 +128,7 @@ public class TurnoService : ITurnoService
 
         return true;
     }
+
 
     public async Task EnviarNotificacionManualAsync(string token, TurnoDTO turnoDTO)
     {
@@ -157,8 +161,12 @@ public class TurnoService : ITurnoService
             .Include(t => t.Cliente).ThenInclude(c => c.Usuario)
             .Include(t => t.Servicio)
             .Include(t => t.Barbero).ThenInclude(b => b.Usuario)
-            .Include(t => t.Barbero).ThenInclude(b => b.Barberia)
+            .Include(t => t.Barbero).ThenInclude(b => b.Barberia) // ✅ Incluir barbería
             .Include(t => t.Barbero).ThenInclude(b => b.Barberia).ThenInclude(b => b.Usuario)
+            .Include(t => t.Cliente).ThenInclude(c => c.Usuario)
+            .Include(t => t.Barbero).ThenInclude(b => b.Usuario)
+            .Include(t => t.Servicio)
+
             .OrderByDescending(t => t.FechaHoraInicio)
             .ToListAsync();
 
@@ -188,7 +196,9 @@ public class TurnoService : ITurnoService
             ServicioPrecioEspecial = turno.Servicio?.PrecioEspecial,
             MotivoCancelacion = turno.MotivoCancelacion ?? string.Empty,
             BarberoNombre = turno.Barbero?.Usuario?.Nombre ?? string.Empty,
-            BarberiaNombre = turno.Barbero?.Barberia?.Usuario?.Nombre ?? string.Empty
+            BarberiaNombre = turno.Barbero?.Barberia?.Usuario?.Nombre ?? string.Empty,
+         
+           
         };
     }
 }
