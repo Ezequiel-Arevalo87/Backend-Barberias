@@ -1,4 +1,5 @@
 ﻿using CrudApi.DTOs;
+using CrudApi.Models;
 using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
@@ -73,7 +74,10 @@ namespace CrudApi.Notifications
             { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
             { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
             { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
-            { "Duracion", turno.Duracion.ToString() }
+            { "Duracion", turno.Duracion.ToString() },
+            { "Tipo", "Cancelacion" },
+            { "TurnoId", turno.Id.ToString() },
+            { "NuevoEstado", ((int)EstadoTurno.Cancelado).ToString() }
         }
             };
 
