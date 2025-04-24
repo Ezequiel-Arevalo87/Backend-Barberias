@@ -89,54 +89,54 @@ public class TurnoService : ITurnoService
         return turnoDTO;
     }
 
-    public async Task<bool> CancelarTurnoAsync(CancelarTurnoDTO dto)
+ public async Task<bool> CancelarTurnoAsync(CancelarTurnoDTO dto)
+{
+    var turno = await _context.Turnos
+        .Include(t => t.Cliente).ThenInclude(c => c.Usuario)
+        .Include(t => t.Barbero).ThenInclude(b => b.Usuario)
+        .Include(t => t.Servicio)
+        .FirstOrDefaultAsync(t => t.Id == dto.TurnoId);
+
+    if (turno == null) return false;
+
+    var minutosRestantes = (turno.FechaHoraInicio - DateTime.Now).TotalMinutes;
+
+    if (dto.Rol == "Cliente")
     {
-        var turno = await _context.Turnos
-            .Include(t => t.Cliente).ThenInclude(c => c.Usuario)
-            .Include(t => t.Barbero).ThenInclude(b => b.Usuario)
-            .Include(t => t.Servicio)
-            .FirstOrDefaultAsync(t => t.Id == dto.TurnoId);
-
-        if (turno == null) return false;
-
-        var minutosRestantes = (turno.FechaHoraInicio - DateTime.Now).TotalMinutes;
-
-        if (dto.Rol == "Cliente")
-        {
-            turno.Estado = minutosRestantes >= 20 ? EstadoTurno.Disponible : EstadoTurno.Cancelado;
-            turno.MotivoCancelacion = "Cancelado por cliente: " + dto.Motivo;
-        }
-        else if (dto.Rol == "Barbero")
-        {
-            turno.MotivoCancelacion = "Cancelado por barbero: " + dto.Motivo;
-            turno.Estado = dto.Restaurar && minutosRestantes >= 20 ? EstadoTurno.Disponible : EstadoTurno.Cancelado;
-        }
-
-        await _context.SaveChangesAsync();
-
-        var turnoDTO = MapTurnoToDTO(turno);
-
-        // 🔔 Enviar notificaciones según el estado final del turno
-        if (turno.Estado == EstadoTurno.Cancelado)
-        {
-            if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
-                await _notificationsService.EnviarNotificacionCancelacionClienteAsync(turno.Cliente.NotificationToken, turnoDTO, dto.Motivo);
-
-            if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
-                await _notificationsService.EnviarNotificacionCancelacionBarberoAsync(turno.Barbero.NotificationToken, turnoDTO, dto.Motivo);
-        }
-        else if (turno.Estado == EstadoTurno.Disponible)
-        {
-            // Si el turno se restauró y quedó disponible, notifica normalmente
-            if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
-                await _notificationsService.SendNotificationAsync(turno.Cliente.NotificationToken, turnoDTO);
-
-            if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
-                await _notificationsService.SendNotificationAsync(turno.Barbero.NotificationToken, turnoDTO);
-        }
-
-        return true;
+        turno.Estado = minutosRestantes >= 20 ? EstadoTurno.Disponible : EstadoTurno.Cancelado;
+        turno.MotivoCancelacion = "Cancelado por cliente: " + dto.Motivo;
     }
+    else if (dto.Rol == "Barbero")
+    {
+        turno.MotivoCancelacion = "Cancelado por barbero: " + dto.Motivo;
+        turno.Estado = dto.Restaurar && minutosRestantes >= 20 ? EstadoTurno.Disponible : EstadoTurno.Cancelado;
+    }
+
+    await _context.SaveChangesAsync();
+
+    var turnoDTO = MapTurnoToDTO(turno);
+
+    // 🔔 Enviar notificaciones según el estado final del turno
+    if (turno.Estado == EstadoTurno.Cancelado)
+    {
+        if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
+            await _notificationsService.EnviarNotificacionCancelacionClienteAsync(turno.Cliente.NotificationToken, turnoDTO, dto.Motivo);
+
+        if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
+            await _notificationsService.EnviarNotificacionCancelacionBarberoAsync(turno.Barbero.NotificationToken, turnoDTO, dto.Motivo);
+    }
+    //else if (turno.Estado == EstadoTurno.Disponible)
+    //{
+    //    // Si el turno se restauró y quedó disponible, notifica normalmente
+    //    if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
+    //        await _notificationsService.SendNotificationAsync(turno.Cliente.NotificationToken, turnoDTO);
+
+    //    if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
+    //        await _notificationsService.SendNotificationAsync(turno.Barbero.NotificationToken, turnoDTO);
+    //}
+
+    return true;
+}
 
 
     public async Task EnviarNotificacionManualAsync(string token, TurnoDTO turnoDTO)
