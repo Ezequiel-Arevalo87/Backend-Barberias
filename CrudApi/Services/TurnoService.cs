@@ -162,6 +162,7 @@ public class TurnoService : ITurnoService
             .Include(t => t.Servicio)
             .Include(t => t.Barbero).ThenInclude(b => b.Usuario)
             .Include(t => t.Barbero).ThenInclude(b => b.Barberia) // ✅ Incluir barbería
+            .Include(t => t.Barbero).ThenInclude(b => b.Barberia).ThenInclude(b => b.Usuario)
             .OrderByDescending(t => t.FechaHoraInicio)
             .ToListAsync();
 
