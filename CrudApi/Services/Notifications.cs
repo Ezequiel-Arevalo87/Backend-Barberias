@@ -83,7 +83,7 @@ namespace CrudApi.Notifications
         public async Task<string> SendCancelacionClienteAsync(string token, TurnoDTO turno)
         {
             var cultura = new CultureInfo("es-CO");
-            string fechaFormateada = turno.FechaHoraInicio.ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
+            string fechaFormateada = turno.FechaHoraInicio.AddHours(-5).ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
 
             var message = new Message()
             {
@@ -101,7 +101,7 @@ namespace CrudApi.Notifications
         public async Task<string> SendCancelacionBarberoAsync(string token, TurnoDTO turno)
         {
             var cultura = new CultureInfo("es-CO");
-            string fechaFormateada = turno.FechaHoraInicio.ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
+            string fechaFormateada = turno.FechaHoraInicio.AddHours(-5).ToString("dddd dd/MM/yyyy 'a las' hh:mm tt", cultura);
 
             var message = new Message()
             {
