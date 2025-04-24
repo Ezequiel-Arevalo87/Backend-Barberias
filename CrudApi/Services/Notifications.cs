@@ -76,8 +76,8 @@ namespace CrudApi.Notifications
             { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
             { "Duracion", turno.Duracion.ToString() },
             { "Tipo", "Cancelacion" },
-            { "TurnoId", turno.Id.ToString() },
-            { "NuevoEstado", ((int)EstadoTurno.Cancelado).ToString() }
+             { "TurnoId", turno.Id.ToString() },
+                 { "NuevoEstado", ((int)EstadoTurno.Cancelado).ToString() }
         }
             };
 
