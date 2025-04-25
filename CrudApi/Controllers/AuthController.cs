@@ -1,8 +1,10 @@
 ﻿using CrudApi.Data;
 using CrudApi.DTOs;
 using CrudApi.Utils;
+using CrudApi.Services; // ✅ Agregamos el namespace donde estará EmailService
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TuProyectoNamespace.Services;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -10,11 +12,13 @@ public class AuthController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly JwtHelper _jwtHelper;
+    private readonly EmailService _emailService; // ✅ Inyectamos el nuevo servicio de email
 
-    public AuthController(ApplicationDbContext context, JwtHelper jwtHelper)
+    public AuthController(ApplicationDbContext context, JwtHelper jwtHelper, EmailService emailService)
     {
         _context = context;
         _jwtHelper = jwtHelper;
+        _emailService = emailService;
     }
 
     [HttpPost("login")]
@@ -46,7 +50,23 @@ public class AuthController : ControllerBase
             usuarioId = usuario.Id,
             role = usuario.Role.Nombre,
             clienteId = usuario.Cliente?.Id,
-            barberoId = barbero?.Id // ✅ Esto es lo nuevo que necesitas
+            barberoId = barbero?.Id
         });
+    }
+
+    // 🔥 Nuevo endpoint para probar envío de correos
+    [HttpGet("probar-correo")]
+    public async Task<IActionResult> ProbarCorreo()
+    {
+        var toEmail = "correo@destino.com"; // 📬 Pon aquí tu correo de prueba
+        var subject = "Prueba de Correo desde Barbería";
+        var body = "<h1>¡Bienvenido!</h1><p>Este es un correo de prueba de tu backend funcionando 🎉</p>";
+
+        var enviado = await _emailService.SendEmailAsync(toEmail, subject, body);
+
+        if (enviado)
+            return Ok("✅ Correo enviado correctamente.");
+        else
+            return StatusCode(500, "❌ Error enviando correo.");
     }
 }

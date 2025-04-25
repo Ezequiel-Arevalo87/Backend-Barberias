@@ -10,6 +10,7 @@ using System.Text;
 using CrudApi.Models;
 using Hangfire;
 using Hangfire.Dashboard;
+using TuProyectoNamespace.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +47,8 @@ builder.Services.AddScoped<CrudApi.Notifications.Notifications>();
 builder.Services.AddScoped<ISucursalBarberiaService, SucursalBarberiaService>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<JwtHelper>();
+builder.Services.AddTransient<EmailService>();
+
 
 // 🔹 Configurar Hangfire
 builder.Services.AddHangfire(config =>

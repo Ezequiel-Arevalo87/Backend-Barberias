@@ -17,6 +17,7 @@ public class Cliente
 
 
 
+    public bool Verificado { get; set; } = false; // 👈 Agregas este campo
 
     public ICollection<Turno> Turnos { get; set; } = new List<Turno>();
 
