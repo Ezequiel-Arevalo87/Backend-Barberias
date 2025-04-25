@@ -58,7 +58,7 @@ public class AuthController : ControllerBase
     [HttpGet("probar-correo")]
     public async Task<IActionResult> ProbarCorreo()
     {
-        var toEmail = "correo@destino.com"; // 📬 Pon aquí tu correo de prueba
+        var toEmail = "ezequ1el87.arevalo@gmail.com"; // 📬 Pon aquí tu correo de prueba
         var subject = "Prueba de Correo desde Barbería";
         var body = "<h1>¡Bienvenido!</h1><p>Este es un correo de prueba de tu backend funcionando 🎉</p>";
 
