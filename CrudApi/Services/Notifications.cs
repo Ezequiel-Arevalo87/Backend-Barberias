@@ -14,7 +14,18 @@ namespace CrudApi.Notifications
         {
             _configuration = configuration;
 
+            // ✅ 1. Intentar con variable de entorno
             string firebaseJson = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS_JSON");
+
+            // ✅ 2. Si no está por variable, buscar en archivo .json definido en appsettings
+            if (string.IsNullOrEmpty(firebaseJson))
+            {
+                string rutaArchivo = _configuration["FirebaseCredentialsPath"]; // Ej: "firebase-adminsdk.json"
+                if (!string.IsNullOrEmpty(rutaArchivo) && File.Exists(rutaArchivo))
+                {
+                    firebaseJson = File.ReadAllText(rutaArchivo);
+                }
+            }
 
             if (!firebaseInitialized && FirebaseApp.DefaultInstance == null)
             {
@@ -119,5 +130,5 @@ namespace CrudApi.Notifications
 
             await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
-    } // <- ahora sí cierra correctamente la clase
+    }
 }

@@ -13,15 +13,24 @@ using Hangfire.Dashboard;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔹 Configurar appsettings.json (opcional en Render)
-builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+// 🔹 Configurar appsettings.json
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-// ✅ Obtener la cadena de conexión desde el entorno (Render usa ENV)
-var dbConnectionString = builder.Configuration["DefaultConnection"];
+// 🔹 Configurar variables de entorno
+builder.Configuration.AddEnvironmentVariables();
 
-// 🔹 Configurar EF Core con SQL Server
+// 🔹 Obtener la cadena de conexión
+var connectionString = builder.Configuration["DefaultConnection"]
+                    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new Exception("⚠️ La cadena de conexión no está definida.");
+}
+
+// 🔹 Configurar EF Core
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(dbConnectionString));
+    options.UseSqlServer(connectionString));
 
 // 🔹 Registrar servicios en la inyección de dependencias
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
@@ -38,78 +47,36 @@ builder.Services.AddScoped<ISucursalBarberiaService, SucursalBarberiaService>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<JwtHelper>();
 
-// 🔹 Habilitar CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll",
-        builder => builder.AllowAnyOrigin()
-                          .AllowAnyMethod()
-                          .AllowAnyHeader());
-});
-
 // 🔹 Configurar Hangfire
 builder.Services.AddHangfire(config =>
-    config.UseSqlServerStorage(dbConnectionString));
+    config.UseSqlServerStorage(connectionString));
 builder.Services.AddHangfireServer();
 
 // 🔹 Configurar controladores y opciones JSON
-//builder.Services.AddControllers().AddJsonOptions(options =>
-//{
-//    options.JsonSerializerOptions.Converters.Add(new JsonDateConverter());
-//    options.JsonSerializerOptions.WriteIndented = true;
-//});
-
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonDateTimeConverter());
     });
 
-builder.Services.AddEndpointsApiExplorer();
-
-// 🔹 Configurar autenticación con JWT
-var secretKey = builder.Configuration["JwtSettings:Key"];
-var issuer = builder.Configuration["JwtSettings:Issuer"];
-var audience = builder.Configuration["JwtSettings:Audience"];
-
-if (string.IsNullOrEmpty(secretKey) || string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(audience))
+// 🔹 Configurar CORS
+builder.Services.AddCors(options =>
 {
-    throw new Exception("⚠️ La configuración JWT (Key, Issuer o Audience) no está definida.");
-}
-
-var key = Encoding.UTF8.GetBytes(secretKey);
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidIssuer = issuer,
-        ValidAudience = audience,
-        ValidateLifetime = true
-    };
+    options.AddPolicy("AllowAll", policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader());
 });
 
-builder.Services.AddAuthorization();
-
-// 🔹 Configurar Swagger con autenticación JWT
+// 🔹 Configurar Swagger
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "API CrudApi", Version = "v1" });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header usando el esquema Bearer. \n\n" +
+        Description = "JWT Authorization header usando el esquema Bearer.\n\n" +
                       "Escribe 'Bearer' seguido de un espacio y luego tu token.\n\n" +
                       "Ejemplo: \"Bearer abcdef12345\"",
         Name = "Authorization",
@@ -134,16 +101,51 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// 🔹 Configurar autenticación JWT
+var jwtKey = builder.Configuration["JwtSettings:Key"];
+var jwtIssuer = builder.Configuration["JwtSettings:Issuer"];
+var jwtAudience = builder.Configuration["JwtSettings:Audience"];
+
+if (string.IsNullOrEmpty(jwtKey) || string.IsNullOrEmpty(jwtIssuer) || string.IsNullOrEmpty(jwtAudience))
+{
+    throw new Exception("⚠️ La configuración JWT (Key, Issuer o Audience) no está definida.");
+}
+
+var key = Encoding.UTF8.GetBytes(jwtKey);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        ValidateLifetime = true
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// 🔹 Construir aplicación
 var app = builder.Build();
 
 // 🔹 Middleware
 app.UseStaticFiles();
-// app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ✅ Swagger accesible desde la raíz
+// 🔹 Swagger accesible desde la raíz
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -157,7 +159,7 @@ app.MapControllers();
 // 🔹 Activar Dashboard de Hangfire
 app.UseHangfireDashboard();
 
-// 🔁 Tarea recurrente: actualizar turnos automáticamente
+// 🔁 Tarea recurrente: actualizar estados de turnos
 RecurringJob.AddOrUpdate<IShiftService>(
     "actualizar-estados-turnos",
     x => x.CerrarTurnosVencidosAsync(),
