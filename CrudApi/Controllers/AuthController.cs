@@ -22,10 +22,11 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    
     public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
     {
         var usuario = await _context.Usuarios
-            .Include(u => u.Cliente)
+            .Include(u => u.Cliente)  // 👈 Necesario para traer el cliente con su Verificado
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Correo == loginDto.Correo);
 
@@ -39,7 +40,12 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Este usuario no tiene un rol asignado." });
         }
 
-        // 🔍 Buscamos si este usuario está asociado como barbero
+        // 🔥 Validamos verificación desde Cliente
+        if (usuario.Role.Id == 3 && (usuario.Cliente == null || usuario.Cliente.Verificado == false))
+        {
+            return Unauthorized(new { message = "Debes confirmar tu correo electrónico antes de ingresar." });
+        }
+
         var barbero = await _context.Barberos.FirstOrDefaultAsync(b => b.UsuarioId == usuario.Id);
 
         var token = _jwtHelper.GenerateToken(usuario);
@@ -50,9 +56,11 @@ public class AuthController : ControllerBase
             usuarioId = usuario.Id,
             role = usuario.Role.Nombre,
             clienteId = usuario.Cliente?.Id,
-            barberoId = barbero?.Id
+            barberoId = barbero?.Id,
+            verificado = usuario.Cliente?.Verificado // 🔥 opcional si quieres mandarlo también al frontend
         });
     }
+
 
     // 🔥 Nuevo endpoint para probar envío de correos
     [HttpGet("probar-correo")]

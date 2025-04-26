@@ -10,15 +10,48 @@ using System.Text;
 using CrudApi.Models;
 using Hangfire;
 using Hangfire.Dashboard;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using System.IO;
 using TuProyectoNamespace.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 🔹 Configurar appsettings.json
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
 // 🔹 Configurar variables de entorno
 builder.Configuration.AddEnvironmentVariables();
+
+// 🔥 Inicializar Firebase (Local o Render)
+var firebaseCredentialsPath = builder.Configuration["FirebaseSettings:CredentialsPath"];
+var firebaseCredentialsJson = builder.Configuration["FirebaseSettings:CredentialsJson"];
+
+if (FirebaseApp.DefaultInstance == null)
+{
+    if (!string.IsNullOrEmpty(firebaseCredentialsPath))
+    {
+        // 📍 Modo local (archivo físico) usando tu clase FirebaseInitializer
+        FirebaseInitializer.InicializarFirebase(firebaseCredentialsPath);
+        Console.WriteLine("✅ Firebase inicializado desde archivo local.");
+    }
+    else if (!string.IsNullOrEmpty(firebaseCredentialsJson))
+    {
+        // 📍 Modo Render (variable de entorno Base64)
+        var decodedJson = Encoding.UTF8.GetString(Convert.FromBase64String(firebaseCredentialsJson));
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(decodedJson));
+
+        FirebaseApp.Create(new AppOptions
+        {
+            Credential = GoogleCredential.FromStream(stream)
+        });
+        Console.WriteLine("✅ Firebase inicializado desde variable de entorno.");
+    }
+    else
+    {
+        throw new Exception("⚠️ No se encontró configuración válida para Firebase (ni CredentialsPath ni CredentialsJson).");
+    }
+}
 
 // 🔹 Obtener la cadena de conexión
 var connectionString = builder.Configuration["DefaultConnection"]
@@ -33,7 +66,7 @@ if (string.IsNullOrEmpty(connectionString))
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 🔹 Registrar servicios en la inyección de dependencias
+// 🔹 Registrar servicios
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IHorarioService, HorarioService>();
 builder.Services.AddScoped<ITurnoService, TurnoService>();
@@ -49,13 +82,12 @@ builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddTransient<EmailService>();
 
-
 // 🔹 Configurar Hangfire
 builder.Services.AddHangfire(config =>
     config.UseSqlServerStorage(connectionString));
 builder.Services.AddHangfireServer();
 
-// 🔹 Configurar controladores y opciones JSON
+// 🔹 Configurar controladores
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -104,7 +136,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// 🔹 Configurar autenticación JWT
+// 🔹 Configurar JWT
 var jwtKey = builder.Configuration["JwtSettings:Key"];
 var jwtIssuer = builder.Configuration["JwtSettings:Issuer"];
 var jwtAudience = builder.Configuration["JwtSettings:Audience"];

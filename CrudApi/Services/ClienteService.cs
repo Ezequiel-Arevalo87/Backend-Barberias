@@ -1,14 +1,17 @@
 ﻿using CrudApi.Data;
 using Microsoft.EntityFrameworkCore;
 using CrudApi.DTOs;
+using TuProyectoNamespace.Services;
 
 public class ClienteService : IClienteService
 {
     private readonly ApplicationDbContext _context;
+    private readonly EmailService _emailService;
 
-    public ClienteService(ApplicationDbContext context)
+    public ClienteService(ApplicationDbContext context, EmailService emailService)
     {
         _context = context;
+        _emailService = emailService;
     }
 
     public async Task<ClienteDTO> RegistrarCliente(ClienteRegistroDTO clienteDto)
@@ -72,13 +75,11 @@ public class ClienteService : IClienteService
         };
     }
 
-    // ✅ Método corregido: guardar el token FCM en el Cliente (NotificationToken está en Cliente)
     public async Task<bool> RegistrarTokenFirebaseAsync(int clienteId, string nuevoToken)
     {
         var cliente = await _context.Clientes.FindAsync(clienteId);
         if (cliente == null) return false;
 
-        // 1. Verificar si el token ya está en un barbero
         var tokenEnBarbero = await _context.Barberos
             .AnyAsync(b => b.NotificationToken == nuevoToken);
 
@@ -88,7 +89,6 @@ public class ClienteService : IClienteService
             return false;
         }
 
-        // 2. Limpiar token en otros clientes
         var otrosConMismoToken = _context.Clientes
             .Where(c => c.NotificationToken == nuevoToken && c.Id != clienteId);
 
@@ -97,13 +97,10 @@ public class ClienteService : IClienteService
             otro.NotificationToken = null;
         }
 
-        // 3. Asignar el token al cliente actual
         cliente.NotificationToken = nuevoToken;
         await _context.SaveChangesAsync();
 
         Console.WriteLine("✅ Token asignado al cliente correctamente.");
         return true;
     }
-
-
 }
