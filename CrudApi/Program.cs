@@ -9,11 +9,9 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using CrudApi.Models;
 using Hangfire;
-using Hangfire.Dashboard;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-using System.IO;
-using TuProyectoNamespace.Services;
+using TuProyectoNamespace.Services; // Ajusta si tu namespace es otro
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,34 +21,11 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnCh
 // 🔹 Configurar variables de entorno
 builder.Configuration.AddEnvironmentVariables();
 
-// 🔥 Inicializar Firebase (Local o Render)
-var firebaseCredentialsPath = builder.Configuration["FirebaseSettings:CredentialsPath"];
-var firebaseCredentialsJson = builder.Configuration["FirebaseSettings:CredentialsJson"];
-
+// 🔥 Inicializar Firebase con la nueva clave
 if (FirebaseApp.DefaultInstance == null)
 {
-    if (!string.IsNullOrEmpty(firebaseCredentialsPath))
-    {
-        // 📍 Modo local (archivo físico) usando tu clase FirebaseInitializer
-        FirebaseInitializer.InicializarFirebase(firebaseCredentialsPath);
-        Console.WriteLine("✅ Firebase inicializado desde archivo local.");
-    }
-    else if (!string.IsNullOrEmpty(firebaseCredentialsJson))
-    {
-        // 📍 Modo Render (variable de entorno Base64)
-        var decodedJson = Encoding.UTF8.GetString(Convert.FromBase64String(firebaseCredentialsJson));
-        var stream = new MemoryStream(Encoding.UTF8.GetBytes(decodedJson));
-
-        FirebaseApp.Create(new AppOptions
-        {
-            Credential = GoogleCredential.FromStream(stream)
-        });
-        Console.WriteLine("✅ Firebase inicializado desde variable de entorno.");
-    }
-    else
-    {
-        throw new Exception("⚠️ No se encontró configuración válida para Firebase (ni CredentialsPath ni CredentialsJson).");
-    }
+    FirebaseInitializer.InicializarFirebase("barberapp-notifications-firebase-adminsdk-fbsvc-1933931b2e.json");
+    Console.WriteLine("✅ Firebase inicializado desde archivo local (nuevo JSON)");
 }
 
 // 🔹 Obtener la cadena de conexión
@@ -201,4 +176,5 @@ RecurringJob.AddOrUpdate<IShiftService>(
     Cron.Minutely
 );
 
+// 🔹 Ejecutar aplicación
 app.Run();

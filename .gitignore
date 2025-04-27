@@ -26,3 +26,5 @@ obj/
 firebase-adminsdk.json
 
 **/Credentials/*.json
+/barberapp-notifications-firebase-adminsdk-fbsvc-1933931b2e.json
+

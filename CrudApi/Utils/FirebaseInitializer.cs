@@ -8,7 +8,7 @@ namespace CrudApi.Utils
     {
         private static bool _isInitialized = false;
 
-        public static void InicializarFirebase(string rutaCredenciales)
+        public static void InicializarFirebase(string rutaArchivoJson)
         {
             if (!_isInitialized && FirebaseApp.DefaultInstance == null)
             {
@@ -16,7 +16,7 @@ namespace CrudApi.Utils
 
                 if (!string.IsNullOrEmpty(firebaseCredentialsJson))
                 {
-                    // 🟠 Estamos en Render (o en entorno con variable)
+                    // 🟠 Estamos en Render (o cualquier entorno con variable)
                     GoogleCredential credential;
 
                     if (IsBase64String(firebaseCredentialsJson))
@@ -36,19 +36,15 @@ namespace CrudApi.Utils
                         Credential = credential
                     });
                 }
-                else if (!string.IsNullOrEmpty(rutaCredenciales))
+                else
                 {
-                    // 🟢 Estamos en local
-                    var credential = GoogleCredential.FromFile(rutaCredenciales);
+                    // 🟢 Estamos en local (archivo JSON)
+                    var credential = GoogleCredential.FromFile(rutaArchivoJson);
                     FirebaseApp.Create(new AppOptions
                     {
                         Credential = credential
                     });
-                    Console.WriteLine("✅ Firebase inicializado desde archivo local");
-                }
-                else
-                {
-                    throw new Exception("⚠️ No se encontró configuración válida de Firebase.");
+                    Console.WriteLine("✅ Firebase inicializado desde archivo local (nuevo JSON)");
                 }
 
                 _isInitialized = true;

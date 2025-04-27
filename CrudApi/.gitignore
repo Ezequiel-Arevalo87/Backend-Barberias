@@ -20,3 +20,5 @@ firebase-adminsdk.json
 
 # Ignorar solo el JSON de Firebase
 Credentials/*.json
+/barberapp-notifications-firebase-adminsdk-fbsvc-1933931b2e.json
+

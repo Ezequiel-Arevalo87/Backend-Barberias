@@ -22,4 +22,10 @@
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="barberapp-notifications-firebase-adminsdk-fbsvc-1933931b2e.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
