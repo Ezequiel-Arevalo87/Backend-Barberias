@@ -89,46 +89,47 @@ public class TurnoService : ITurnoService
         return turnoDTO;
     }
 
- public async Task<bool> CancelarTurnoAsync(CancelarTurnoDTO dto)
-{
-    var turno = await _context.Turnos
-        .Include(t => t.Cliente).ThenInclude(c => c.Usuario)
-        .Include(t => t.Barbero).ThenInclude(b => b.Usuario)
-        .Include(t => t.Servicio)
-        .FirstOrDefaultAsync(t => t.Id == dto.TurnoId);
-
-    if (turno == null) return false;
-
-    var minutosRestantes = (turno.FechaHoraInicio - DateTime.Now).TotalMinutes;
-
-    if (dto.Rol == "Cliente")
+    public async Task<bool> CancelarTurnoAsync(CancelarTurnoDTO dto)
     {
-        turno.Estado = minutosRestantes >= 20 ? EstadoTurno.Disponible : EstadoTurno.Cancelado;
-        turno.MotivoCancelacion = "Cancelado por cliente: " + dto.Motivo;
+        var turno = await _context.Turnos
+            .Include(t => t.Cliente).ThenInclude(c => c.Usuario)
+            .Include(t => t.Barbero).ThenInclude(b => b.Usuario)
+            .Include(t => t.Servicio)
+            .FirstOrDefaultAsync(t => t.Id == dto.TurnoId);
+
+        if (turno == null) return false;
+
+        var minutosRestantes = (turno.FechaHoraInicio - DateTime.Now).TotalMinutes;
+
+        if (dto.Rol == "Cliente")
+        {
+            // ✅ Cliente depende del tiempo: mayor o menor a 20 minutos
+            turno.Estado = minutosRestantes >= 20 ? EstadoTurno.Disponible : EstadoTurno.Cancelado;
+            turno.MotivoCancelacion = "Cancelado por cliente: " + dto.Motivo;
+        }
+        else if (dto.Rol == "Barbero")
+        {
+            // ✅ Barbero elige si libera (Disponible) o cancela (Cancelado)
+            turno.MotivoCancelacion = "Cancelado por barbero: " + dto.Motivo;
+            turno.Estado = dto.Restaurar ? EstadoTurno.Disponible : EstadoTurno.Cancelado;
+        }
+
+        await _context.SaveChangesAsync();
+
+        var turnoDTO = MapTurnoToDTO(turno);
+
+        // 🔔 Enviar notificaciones
+        if (turno.Estado == EstadoTurno.Cancelado || turno.Estado == EstadoTurno.Disponible)
+        {
+            if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
+                await _notificationsService.EnviarNotificacionCancelacionClienteAsync(turno.Cliente.NotificationToken, turnoDTO, dto.Motivo);
+
+            if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
+                await _notificationsService.EnviarNotificacionCancelacionBarberoAsync(turno.Barbero.NotificationToken, turnoDTO, dto.Motivo);
+        }
+
+        return true;
     }
-    else if (dto.Rol == "Barbero")
-    {
-        turno.MotivoCancelacion = "Cancelado por barbero: " + dto.Motivo;
-        turno.Estado = dto.Restaurar && minutosRestantes >= 20 ? EstadoTurno.Disponible : EstadoTurno.Cancelado;
-    }
-
-    await _context.SaveChangesAsync();
-
-    var turnoDTO = MapTurnoToDTO(turno);
-
-    // 🔔 Enviar notificaciones según el estado final del turno
-    if (turno.Estado == EstadoTurno.Cancelado || turno.Estado == EstadoTurno.Disponible)
-    {
-        if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
-            await _notificationsService.EnviarNotificacionCancelacionClienteAsync(turno.Cliente.NotificationToken, turnoDTO, dto.Motivo);
-
-        if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
-            await _notificationsService.EnviarNotificacionCancelacionBarberoAsync(turno.Barbero.NotificationToken, turnoDTO, dto.Motivo);
-    }
-   
-
-    return true;
-}
 
 
     public async Task EnviarNotificacionManualAsync(string token, TurnoDTO turnoDTO)
