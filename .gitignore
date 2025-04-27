@@ -22,4 +22,7 @@ obj/
 *.pidb
 *.pdb
 
+# Ignorar credenciales Firebase
+firebase-adminsdk.json
+
 **/Credentials/*.json
