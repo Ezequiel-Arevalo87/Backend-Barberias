@@ -104,6 +104,16 @@ namespace CrudApi.Notifications
             await EnviarMensajePersonalizado(token, turno, title, body);
         }
 
+        // ✅ Nuevo método para cuando el barbero cancela
+        public async Task EnviarNotificacionCancelacionPorBarberoAsync(string token, TurnoDTO turno, string motivo)
+        {
+            string title = "Turno Cancelado por Barbero";
+            string body = $"Tu turno fue cancelado por el barbero {turno.BarberoNombre}. Motivo: {motivo}";
+
+            await EnviarMensajePersonalizado(token, turno, title, body);
+        }
+
+
         private async Task EnviarMensajePersonalizado(string token, TurnoDTO turno, string title, string body)
         {
             var message = new Message()
