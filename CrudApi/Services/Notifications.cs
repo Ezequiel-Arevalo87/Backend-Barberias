@@ -59,32 +59,30 @@ namespace CrudApi.Notifications
             var devuelvefechaLocalNotificacion = turno.FechaHoraInicio.AddHours(-5);
 
             string title = "Turno Confirmado";
-            string body = $"Tu turno fue agendado para el {devuelvefechaLocalNotificacion}. Servicio: {turno.ServicioNombre}";
+            string body = $"Tu turno fue agendado para el {devuelvefechaLocalNotificacion:dd/MM/yyyy HH:mm}. Servicio: {turno.ServicioNombre}";
 
             var message = new Message()
             {
                 Token = token,
-                Notification = new Notification
-                {
-                    Title = title,
-                    Body = body
-                },
                 Data = new Dictionary<string, string>
-                {
-                    { "TurnoId", turno.Id.ToString() },
-                    { "BarberoId", turno.BarberoId.ToString() },
-                    { "ClienteId", turno.ClienteId.ToString() },
-                    { "FechaHoraInicio", devuelvefechaLocalNotificacion.ToString("yyyy-MM-dd HH:mm:ss") },
-                    { "Estado", turno.Estado.ToString() },
-                    { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
-                    { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
-                    { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
-                    { "Duracion", turno.Duracion.ToString() }
-                }
+        {
+            { "title", title },
+            { "body", body },
+            { "TurnoId", turno.Id.ToString() },
+            { "BarberoId", turno.BarberoId.ToString() },
+            { "ClienteId", turno.ClienteId.ToString() },
+            { "FechaHoraInicio", devuelvefechaLocalNotificacion.ToString("yyyy-MM-dd HH:mm:ss") },
+            { "Estado", turno.Estado.ToString() },
+            { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
+            { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
+            { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
+            { "Duracion", turno.Duracion.ToString() }
+        }
             };
 
             return await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
+
 
         public async Task EnviarNotificacionCancelacionClienteAsync(string token, TurnoDTO turno, string motivo)
         {
