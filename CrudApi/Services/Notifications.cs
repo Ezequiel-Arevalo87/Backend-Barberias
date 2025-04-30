@@ -111,6 +111,30 @@ namespace CrudApi.Notifications
             await EnviarMensajePersonalizado(token, turno, title, body);
         }
 
+        public async Task EnviarNotificacionCambioEstadoAsync(string token, TurnoDTO turno)
+        {
+            var message = new Message()
+            {
+                Token = token,
+                Data = new Dictionary<string, string>
+        {
+            { "tipo", "ACTUALIZAR_TURNO" },
+            { "TurnoId", turno.Id.ToString() },
+            { "BarberoId", turno.BarberoId.ToString() },
+            { "ClienteId", turno.ClienteId.ToString() },
+            { "FechaHoraInicio", turno.FechaHoraInicio.ToString("yyyy-MM-dd HH:mm:ss") },
+            { "Estado", turno.Estado.ToString() },
+            { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
+            { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
+            { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
+            { "Duracion", turno.Duracion.ToString() }
+        }
+            };
+
+            await FirebaseMessaging.DefaultInstance.SendAsync(message);
+        }
+
+
 
         private async Task EnviarMensajePersonalizado(string token, TurnoDTO turno, string title, string body)
         {
