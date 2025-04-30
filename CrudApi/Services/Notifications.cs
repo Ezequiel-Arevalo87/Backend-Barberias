@@ -2,6 +2,7 @@
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using System.Globalization;
+using CrudApi.Models;
 
 namespace CrudApi.Notifications
 {
@@ -111,22 +112,36 @@ namespace CrudApi.Notifications
             await EnviarMensajePersonalizado(token, turno, title, body);
         }
 
+
+
         public async Task EnviarNotificacionCambioEstadoAsync(string token, TurnoDTO turno)
         {
-            var message = new Message()
+            string estadoTexto = turno.Estado switch
+            {
+                EstadoTurno.EnProceso => "El turno ha comenzado.",
+                EstadoTurno.Cerrado => "El turno ha finalizado.",
+                _ => "Actualización del turno."
+            };
+
+            string titulo = "📢 Cambio en el turno";
+            string cuerpo = $"{estadoTexto} Servicio: {turno.ServicioNombre}, Cliente: {turno.ClienteNombre}";
+
+            var message = new Message
             {
                 Token = token,
                 Data = new Dictionary<string, string>
         {
+            { "title", titulo },
+            { "body", cuerpo },
             { "tipo", "ACTUALIZAR_TURNO" },
             { "TurnoId", turno.Id.ToString() },
             { "BarberoId", turno.BarberoId.ToString() },
             { "ClienteId", turno.ClienteId.ToString() },
-            { "FechaHoraInicio", turno.FechaHoraInicio.ToString("yyyy-MM-dd HH:mm:ss") },
-            { "Estado", turno.Estado.ToString() },
-            { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
-            { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
-            { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
+            { "FechaHoraInicio", turno.FechaHoraInicio.AddHours(-5).ToString("yyyy-MM-dd HH:mm:ss") },
+            { "Estado", ((int)turno.Estado).ToString() },
+            { "ClienteNombre", turno.ClienteNombre ?? "" },
+            { "ClienteApellido", turno.ClienteApellido ?? "" },
+            { "ServicioNombre", turno.ServicioNombre ?? "" },
             { "Duracion", turno.Duracion.ToString() }
         }
             };
