@@ -69,6 +69,7 @@ namespace CrudApi.Notifications
         {
             { "title", title },
             { "body", body },
+            { "tipo", "ACTUALIZAR_TURNO" }, // ✅ Esto es lo que faltaba
             { "TurnoId", turno.Id.ToString() },
             { "BarberoId", turno.BarberoId.ToString() },
             { "ClienteId", turno.ClienteId.ToString() },
