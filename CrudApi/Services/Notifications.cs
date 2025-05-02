@@ -53,31 +53,41 @@ namespace CrudApi.Notifications
 
         public async Task<string> SendNotificationAsync(string token, TurnoDTO turno)
         {
-            if (FirebaseMessaging.DefaultInstance == null)
-                throw new InvalidOperationException("❌ FirebaseMessaging.DefaultInstance no está inicializado.");
-
             var cultura = new CultureInfo("es-CO");
-            var devuelvefechaLocalNotificacion = turno.FechaHoraInicio.AddHours(-5);
+            var fechaLocal = turno.FechaHoraInicio; // Ya está en hora local (sin -5 si ya corregiste eso)
 
-            string title = "Turno Confirmado";
-            string body = $"Tu turno fue agendado para el {devuelvefechaLocalNotificacion:dd/MM/yyyy HH:mm}. Servicio: {turno.ServicioNombre}";
+            string title = "📅 Turno Agendado";
+            string body = $"Tu turno fue agendado con {turno.BarberoNombre} el {fechaLocal:dd/MM/yyyy} a las {fechaLocal:hh:mm tt}. Servicio: {turno.ServicioNombre}";
 
             var message = new Message()
             {
                 Token = token,
+                Notification = new Notification
+                {
+                    Title = title,
+                    Body = body
+                },
+                Android = new AndroidConfig
+                {
+                    Priority = Priority.High,
+                    Notification = new AndroidNotification
+                    {
+                        ChannelId = "default", // 👈 debe coincidir con tu canal en notifee
+                        Sound = "default",
+                        ClickAction = "FLUTTER_NOTIFICATION_CLICK"
+                    }
+                },
                 Data = new Dictionary<string, string>
         {
-            { "title", title },
-            { "body", body },
-            { "tipo", "ACTUALIZAR_TURNO" }, // ✅ Esto es lo que faltaba
+            { "tipo", "ACTUALIZAR_TURNO" },
             { "TurnoId", turno.Id.ToString() },
             { "BarberoId", turno.BarberoId.ToString() },
             { "ClienteId", turno.ClienteId.ToString() },
-            { "FechaHoraInicio", devuelvefechaLocalNotificacion.ToString("yyyy-MM-dd HH:mm:ss") },
+            { "FechaHoraInicio", fechaLocal.ToString("yyyy-MM-dd HH:mm:ss") },
             { "Estado", turno.Estado.ToString() },
-            { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
-            { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
-            { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
+            { "ClienteNombre", turno.ClienteNombre ?? "" },
+            { "ClienteApellido", turno.ClienteApellido ?? "" },
+            { "ServicioNombre", turno.ServicioNombre ?? "" },
             { "Duracion", turno.Duracion.ToString() }
         }
             };
