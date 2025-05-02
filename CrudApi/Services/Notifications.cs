@@ -114,32 +114,44 @@ namespace CrudApi.Notifications
         }
 
 
-
         public async Task EnviarNotificacionCambioEstadoAsync(string token, TurnoDTO turno)
         {
             string estadoTexto = turno.Estado switch
             {
-                EstadoTurno.EnProceso => "El turno ha comenzado.",
-                EstadoTurno.Cerrado => "El turno ha finalizado.",
-                _ => "Actualización del turno."
+                EstadoTurno.EnProceso => "🟠 Tu turno ha comenzado.",
+                EstadoTurno.Cerrado => "✅ Tu turno ha finalizado.",
+                _ => "📢 Actualización del turno."
             };
 
-            string titulo = "📢 Cambio en el turno";
+            string titulo = "📣 Notificación de Turno";
             string cuerpo = $"{estadoTexto} Servicio: {turno.ServicioNombre}, Cliente: {turno.ClienteNombre}";
 
             var message = new Message
             {
                 Token = token,
+                Notification = new Notification
+                {
+                    Title = titulo,
+                    Body = cuerpo
+                },
+                Android = new AndroidConfig
+                {
+                    Priority = Priority.High,
+                    Notification = new AndroidNotification
+                    {
+                        ChannelId = "turno_notificaciones", // el ID debe coincidir con el canal creado en la app móvil
+                        Sound = "default",
+                        ClickAction = "FLUTTER_NOTIFICATION_CLICK"
+                    }
+                },
                 Data = new Dictionary<string, string>
         {
-            { "title", titulo },
-            { "body", cuerpo },
             { "tipo", "ACTUALIZAR_TURNO" },
             { "TurnoId", turno.Id.ToString() },
             { "BarberoId", turno.BarberoId.ToString() },
             { "ClienteId", turno.ClienteId.ToString() },
-            { "FechaHoraInicio", turno.FechaHoraInicio.AddHours(-5).ToString("yyyy-MM-dd HH:mm:ss") },
-            { "Estado", ((int)turno.Estado).ToString() },
+            { "FechaHoraInicio", turno.FechaHoraInicio.ToString("yyyy-MM-dd HH:mm:ss") },
+            { "Estado", turno.Estado.ToString() },
             { "ClienteNombre", turno.ClienteNombre ?? "" },
             { "ClienteApellido", turno.ClienteApellido ?? "" },
             { "ServicioNombre", turno.ServicioNombre ?? "" },
