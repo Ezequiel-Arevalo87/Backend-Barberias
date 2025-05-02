@@ -50,13 +50,12 @@ namespace CrudApi.Notifications
                 Console.WriteLine("ℹ️ FirebaseApp ya estaba inicializado.");
             }
         }
-
         public async Task<string> SendNotificationAsync(string token, TurnoDTO turno)
         {
             var cultura = new CultureInfo("es-CO");
 
-            // ✅ Ajuste a hora local manual (si no usas zonas horarias en DateTime)
-            var fechaLocal = turno.FechaHoraInicio.AddHours(-5); // Colombia GMT-5
+            // ✅ Ajuste manual a hora local de Colombia
+            var fechaLocal = turno.FechaHoraInicio.AddHours(-5);
 
             string title = "📅 Turno Agendado";
             string body = $"Tu turno fue agendado con {turno.BarberoNombre} el {fechaLocal:dd/MM/yyyy} a las {fechaLocal:hh:mm tt}. Servicio: {turno.ServicioNombre}";
@@ -64,23 +63,10 @@ namespace CrudApi.Notifications
             var message = new Message()
             {
                 Token = token,
-                Notification = new Notification
-                {
-                    Title = title,
-                    Body = body
-                },
-                Android = new AndroidConfig
-                {
-                    Priority = Priority.High,
-                    Notification = new AndroidNotification
-                    {
-                        ChannelId = "default", // 👈 debe coincidir con notifee en la app
-                        Sound = "default",
-                        ClickAction = "FLUTTER_NOTIFICATION_CLICK"
-                    }
-                },
                 Data = new Dictionary<string, string>
         {
+            { "title", title },
+            { "body", body },
             { "tipo", "ACTUALIZAR_TURNO" },
             { "TurnoId", turno.Id.ToString() },
             { "BarberoId", turno.BarberoId.ToString() },
