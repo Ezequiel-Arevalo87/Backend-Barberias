@@ -54,7 +54,9 @@ namespace CrudApi.Notifications
         public async Task<string> SendNotificationAsync(string token, TurnoDTO turno)
         {
             var cultura = new CultureInfo("es-CO");
-            var fechaLocal = turno.FechaHoraInicio; // Ya está en hora local (sin -5 si ya corregiste eso)
+
+            // ✅ Ajuste a hora local manual (si no usas zonas horarias en DateTime)
+            var fechaLocal = turno.FechaHoraInicio.AddHours(-5); // Colombia GMT-5
 
             string title = "📅 Turno Agendado";
             string body = $"Tu turno fue agendado con {turno.BarberoNombre} el {fechaLocal:dd/MM/yyyy} a las {fechaLocal:hh:mm tt}. Servicio: {turno.ServicioNombre}";
@@ -72,7 +74,7 @@ namespace CrudApi.Notifications
                     Priority = Priority.High,
                     Notification = new AndroidNotification
                     {
-                        ChannelId = "default", // 👈 debe coincidir con tu canal en notifee
+                        ChannelId = "default", // 👈 debe coincidir con notifee en la app
                         Sound = "default",
                         ClickAction = "FLUTTER_NOTIFICATION_CLICK"
                     }
