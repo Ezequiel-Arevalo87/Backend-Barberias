@@ -52,13 +52,15 @@ namespace CrudApi.Notifications
         }
         public async Task<string> SendNotificationAsync(string token, TurnoDTO turno)
         {
-            var cultura = new CultureInfo("es-CO");
-            var fechaLocal = DateTime.SpecifyKind(turno.FechaHoraInicio, DateTimeKind.Local);
+            Console.WriteLine($"🟠 Enviando notificación...");
+            Console.WriteLine($"📲 Token: {token}");
+            Console.WriteLine($"📅 FechaHoraInicio: {turno.FechaHoraInicio}");
 
+            var fechaLocal = turno.FechaHoraInicio;
             string title = "📅 Turno Agendado";
             string body = $"Tienes un nuevo turno con {turno.ClienteNombre} el {fechaLocal:dd/MM/yyyy} a las {fechaLocal:hh:mm tt}. Servicio: {turno.ServicioNombre}";
 
-            var message = new Message()
+            var message = new Message
             {
                 Token = token,
                 Notification = new Notification
@@ -93,8 +95,19 @@ namespace CrudApi.Notifications
         }
             };
 
-            return await FirebaseMessaging.DefaultInstance.SendAsync(message);
+            try
+            {
+                var response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
+                Console.WriteLine($"✅ Notificación enviada con éxito. ID: {response}");
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error enviando notificación: {ex.Message}");
+                return "ERROR";
+            }
         }
+
         public async Task EnviarNotificacionCancelacionClienteAsync(string token, TurnoDTO turno, string motivo)
         {
             var cultura = new CultureInfo("es-CO");
