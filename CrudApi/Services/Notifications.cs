@@ -53,7 +53,7 @@ namespace CrudApi.Notifications
         public async Task<string> SendNotificationAsync(string token, TurnoDTO turno)
         {
             var cultura = new CultureInfo("es-CO");
-            var fechaLocal = turno.FechaHoraInicio.AddHours(-5);
+            var fechaLocal = DateTime.SpecifyKind(turno.FechaHoraInicio, DateTimeKind.Local);
 
             string title = "📅 Turno Agendado";
             string body = $"Tienes un nuevo turno con {turno.ClienteNombre} el {fechaLocal:dd/MM/yyyy} a las {fechaLocal:hh:mm tt}. Servicio: {turno.ServicioNombre}";
@@ -73,7 +73,7 @@ namespace CrudApi.Notifications
                     {
                         ChannelId = "turno_notificaciones",
                         Sound = "default",
-                        ClickAction = "FLUTTER_NOTIFICATION_CLICK" // o el que uses
+                        ClickAction = "FLUTTER_NOTIFICATION_CLICK"
                     }
                 },
                 Data = new Dictionary<string, string>
@@ -95,7 +95,6 @@ namespace CrudApi.Notifications
 
             return await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
-
         public async Task EnviarNotificacionCancelacionClienteAsync(string token, TurnoDTO turno, string motivo)
         {
             var cultura = new CultureInfo("es-CO");
@@ -126,6 +125,7 @@ namespace CrudApi.Notifications
 
         public async Task EnviarNotificacionCambioEstadoAsync(string token, TurnoDTO turno)
         {
+            var fechaLocal = DateTime.SpecifyKind(turno.FechaHoraInicio, DateTimeKind.Local);
             string estadoTexto = turno.Estado switch
             {
                 EstadoTurno.EnProceso => "🟠 Tu turno ha comenzado.",
@@ -149,7 +149,7 @@ namespace CrudApi.Notifications
                     Priority = Priority.High,
                     Notification = new AndroidNotification
                     {
-                        ChannelId = "turno_notificaciones", // el ID debe coincidir con el canal creado en la app móvil
+                        ChannelId = "turno_notificaciones",
                         Sound = "default",
                         ClickAction = "FLUTTER_NOTIFICATION_CLICK"
                     }
@@ -160,7 +160,7 @@ namespace CrudApi.Notifications
             { "TurnoId", turno.Id.ToString() },
             { "BarberoId", turno.BarberoId.ToString() },
             { "ClienteId", turno.ClienteId.ToString() },
-            { "FechaHoraInicio", turno.FechaHoraInicio.ToString("yyyy-MM-dd HH:mm:ss") },
+            { "FechaHoraInicio", fechaLocal.ToString("yyyy-MM-dd HH:mm:ss") },
             { "Estado", turno.Estado.ToString() },
             { "ClienteNombre", turno.ClienteNombre ?? "" },
             { "ClienteApellido", turno.ClienteApellido ?? "" },
@@ -176,6 +176,8 @@ namespace CrudApi.Notifications
 
         private async Task EnviarMensajePersonalizado(string token, TurnoDTO turno, string title, string body)
         {
+            var fechaLocal = DateTime.SpecifyKind(turno.FechaHoraInicio, DateTimeKind.Local);
+
             var message = new Message()
             {
                 Token = token,
@@ -185,20 +187,21 @@ namespace CrudApi.Notifications
                     Body = body
                 },
                 Data = new Dictionary<string, string>
-                {
-                    { "TurnoId", turno.Id.ToString() },
-                    { "BarberoId", turno.BarberoId.ToString() },
-                    { "ClienteId", turno.ClienteId.ToString() },
-                    { "FechaHoraInicio", turno.FechaHoraInicio.AddHours(-5).ToString("yyyy-MM-dd HH:mm:ss") },
-                    { "Estado", turno.Estado.ToString() },
-                    { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
-                    { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
-                    { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
-                    { "Duracion", turno.Duracion.ToString() }
-                }
+        {
+            { "TurnoId", turno.Id.ToString() },
+            { "BarberoId", turno.BarberoId.ToString() },
+            { "ClienteId", turno.ClienteId.ToString() },
+            { "FechaHoraInicio", fechaLocal.ToString("yyyy-MM-dd HH:mm:ss") },
+            { "Estado", turno.Estado.ToString() },
+            { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
+            { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
+            { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
+            { "Duracion", turno.Duracion.ToString() }
+        }
             };
 
             await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
     }
+
 }

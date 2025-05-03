@@ -225,15 +225,17 @@ public class TurnoService : ITurnoService
 
     private TurnoDTO MapTurnoToDTO(Turno turno)
     {
+        var fechaLocal = DateTime.SpecifyKind(turno.FechaHoraInicio, DateTimeKind.Local); // 👈 Aquí te aseguras de que siempre se trate como local
+
         return new TurnoDTO
         {
             Id = turno.Id,
             BarberoId = turno.BarberoId,
             ServicioId = turno.ServicioId,
             ClienteId = turno.ClienteId,
-            FechaHoraInicio = turno.FechaHoraInicio,
-            HoraFin = turno.FechaHoraInicio.Add(turno.Duracion),
-            Fecha = turno.FechaHoraInicio.Date,
+            FechaHoraInicio = fechaLocal,
+            HoraFin = fechaLocal.Add(turno.Duracion),
+            Fecha = fechaLocal.Date,
             Duracion = turno.Duracion,
             Estado = turno.Estado,
             ClienteNombre = turno.Cliente?.Usuario?.Nombre ?? string.Empty,
@@ -246,4 +248,5 @@ public class TurnoService : ITurnoService
             ServicioPrecioEspecial = turno.Servicio?.PrecioEspecial
         };
     }
+
 }
