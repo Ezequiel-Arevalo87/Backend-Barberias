@@ -46,18 +46,15 @@ public class ShiftService : IShiftService
                 turno.Estado = nuevoEstado.Value;
                 turno.HoraFin = horaFin;
 
-                var fechaInicioLocal = turno.FechaHoraInicio.AddHours(-5);
-                var horaFinLocal = horaFin.AddHours(-5);
-
                 var turnoDTO = new TurnoDTO
                 {
                     Id = turno.Id,
                     BarberoId = turno.BarberoId,
                     ClienteId = turno.ClienteId,
                     ServicioId = turno.ServicioId,
-                    FechaHoraInicio = fechaInicioLocal,
-                    HoraFin = horaFinLocal,
-                    Fecha = fechaInicioLocal.Date,
+                    FechaHoraInicio = turno.FechaHoraInicio,
+                    HoraFin = horaFin,
+                    Fecha = turno.FechaHoraInicio.Date,
                     Duracion = turno.Duracion,
                     Estado = turno.Estado,
                     ClienteNombre = turno.Cliente?.Usuario?.Nombre ?? "",
@@ -67,7 +64,6 @@ public class ShiftService : IShiftService
                     ServicioPrecio = turno.Servicio?.Precio ?? 0,
                     ServicioPrecioEspecial = turno.Servicio?.PrecioEspecial
                 };
-
 
                 var tokenBarbero = turno.Barbero?.NotificationToken;
                 if (!string.IsNullOrWhiteSpace(tokenBarbero))
