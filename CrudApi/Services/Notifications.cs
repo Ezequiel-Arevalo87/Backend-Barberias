@@ -15,13 +15,11 @@ namespace CrudApi.Notifications
         {
             _configuration = configuration;
 
-            // ✅ 1. Intentar con variable de entorno
             string firebaseJson = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS_JSON");
 
-            // ✅ 2. Si no está por variable, buscar en archivo .json definido en appsettings
             if (string.IsNullOrEmpty(firebaseJson))
             {
-                string rutaArchivo = _configuration["FirebaseCredentialsPath"]; // Ej: "firebase-adminsdk.json"
+                string rutaArchivo = _configuration["FirebaseCredentialsPath"];
                 if (!string.IsNullOrEmpty(rutaArchivo) && File.Exists(rutaArchivo))
                 {
                     firebaseJson = File.ReadAllText(rutaArchivo);
@@ -50,13 +48,14 @@ namespace CrudApi.Notifications
                 Console.WriteLine("ℹ️ FirebaseApp ya estaba inicializado.");
             }
         }
+
         public async Task<string> SendNotificationAsync(string token, TurnoDTO turno)
         {
+            var fechaLocal = DateTime.SpecifyKind(turno.FechaHoraInicio, DateTimeKind.Local);
             Console.WriteLine($"🟠 Enviando notificación...");
             Console.WriteLine($"📲 Token: {token}");
-            Console.WriteLine($"📅 FechaHoraInicio: {turno.FechaHoraInicio}");
+            Console.WriteLine($"📅 FechaHoraInicio: {fechaLocal} (Kind: {fechaLocal.Kind})");
 
-            var fechaLocal = turno.FechaHoraInicio;
             string title = "📅 Turno Agendado";
             string body = $"Tienes un nuevo turno con {turno.ClienteNombre} el {fechaLocal:dd/MM/yyyy} a las {fechaLocal:hh:mm tt}. Servicio: {turno.ServicioNombre}";
 
@@ -79,20 +78,20 @@ namespace CrudApi.Notifications
                     }
                 },
                 Data = new Dictionary<string, string>
-        {
-            { "tipo", "ACTUALIZAR_TURNO" },
-            { "TurnoId", turno.Id.ToString() },
-            { "BarberoId", turno.BarberoId.ToString() },
-            { "ClienteId", turno.ClienteId.ToString() },
-            { "FechaHoraInicio", fechaLocal.ToString("yyyy-MM-dd HH:mm:ss") },
-            { "Estado", turno.Estado.ToString() },
-            { "ClienteNombre", turno.ClienteNombre ?? "" },
-            { "ClienteApellido", turno.ClienteApellido ?? "" },
-            { "ServicioNombre", turno.ServicioNombre ?? "" },
-            { "Duracion", turno.Duracion.ToString() },
-            { "title", title },
-            { "body", body }
-        }
+                {
+                    { "tipo", "ACTUALIZAR_TURNO" },
+                    { "TurnoId", turno.Id.ToString() },
+                    { "BarberoId", turno.BarberoId.ToString() },
+                    { "ClienteId", turno.ClienteId.ToString() },
+                    { "FechaHoraInicio", fechaLocal.ToString("yyyy-MM-dd HH:mm:ss") },
+                    { "Estado", turno.Estado.ToString() },
+                    { "ClienteNombre", turno.ClienteNombre ?? "" },
+                    { "ClienteApellido", turno.ClienteApellido ?? "" },
+                    { "ServicioNombre", turno.ServicioNombre ?? "" },
+                    { "Duracion", turno.Duracion.ToString() },
+                    { "title", title },
+                    { "body", body }
+                }
             };
 
             try
@@ -110,31 +109,24 @@ namespace CrudApi.Notifications
 
         public async Task EnviarNotificacionCancelacionClienteAsync(string token, TurnoDTO turno, string motivo)
         {
-            var cultura = new CultureInfo("es-CO");
             string title = "Turno Cancelado";
             string body = $"Tu turno con {turno.BarberoNombre} fue cancelado. Motivo: {motivo}";
-
             await EnviarMensajePersonalizado(token, turno, title, body);
         }
 
         public async Task EnviarNotificacionCancelacionBarberoAsync(string token, TurnoDTO turno, string motivo)
         {
-            var cultura = new CultureInfo("es-CO");
             string title = "Turno Cancelado por Cliente";
             string body = $"El cliente {turno.ClienteNombre} canceló su turno. Motivo: {motivo}";
-
             await EnviarMensajePersonalizado(token, turno, title, body);
         }
 
-        // ✅ Nuevo método para cuando el barbero cancela
         public async Task EnviarNotificacionCancelacionPorBarberoAsync(string token, TurnoDTO turno, string motivo)
         {
             string title = "Turno Cancelado por Barbero";
             string body = $"Tu turno fue cancelado por el barbero {turno.BarberoNombre}. Motivo: {motivo}";
-
             await EnviarMensajePersonalizado(token, turno, title, body);
         }
-
 
         public async Task EnviarNotificacionCambioEstadoAsync(string token, TurnoDTO turno)
         {
@@ -168,30 +160,28 @@ namespace CrudApi.Notifications
                     }
                 },
                 Data = new Dictionary<string, string>
-        {
-            { "tipo", "ACTUALIZAR_TURNO" },
-            { "TurnoId", turno.Id.ToString() },
-            { "BarberoId", turno.BarberoId.ToString() },
-            { "ClienteId", turno.ClienteId.ToString() },
-            { "FechaHoraInicio", fechaLocal.ToString("yyyy-MM-dd HH:mm:ss") },
-            { "Estado", turno.Estado.ToString() },
-            { "ClienteNombre", turno.ClienteNombre ?? "" },
-            { "ClienteApellido", turno.ClienteApellido ?? "" },
-            { "ServicioNombre", turno.ServicioNombre ?? "" },
-            { "Duracion", turno.Duracion.ToString() }
-        }
+                {
+                    { "tipo", "ACTUALIZAR_TURNO" },
+                    { "TurnoId", turno.Id.ToString() },
+                    { "BarberoId", turno.BarberoId.ToString() },
+                    { "ClienteId", turno.ClienteId.ToString() },
+                    { "FechaHoraInicio", fechaLocal.ToString("yyyy-MM-dd HH:mm:ss") },
+                    { "Estado", turno.Estado.ToString() },
+                    { "ClienteNombre", turno.ClienteNombre ?? "" },
+                    { "ClienteApellido", turno.ClienteApellido ?? "" },
+                    { "ServicioNombre", turno.ServicioNombre ?? "" },
+                    { "Duracion", turno.Duracion.ToString() }
+                }
             };
 
             await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
 
-
-
         private async Task EnviarMensajePersonalizado(string token, TurnoDTO turno, string title, string body)
         {
             var fechaLocal = DateTime.SpecifyKind(turno.FechaHoraInicio, DateTimeKind.Local);
 
-            var message = new Message()
+            var message = new Message
             {
                 Token = token,
                 Notification = new Notification
@@ -200,21 +190,20 @@ namespace CrudApi.Notifications
                     Body = body
                 },
                 Data = new Dictionary<string, string>
-        {
-            { "TurnoId", turno.Id.ToString() },
-            { "BarberoId", turno.BarberoId.ToString() },
-            { "ClienteId", turno.ClienteId.ToString() },
-            { "FechaHoraInicio", fechaLocal.ToString("yyyy-MM-dd HH:mm:ss") },
-            { "Estado", turno.Estado.ToString() },
-            { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
-            { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
-            { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
-            { "Duracion", turno.Duracion.ToString() }
-        }
+                {
+                    { "TurnoId", turno.Id.ToString() },
+                    { "BarberoId", turno.BarberoId.ToString() },
+                    { "ClienteId", turno.ClienteId.ToString() },
+                    { "FechaHoraInicio", fechaLocal.ToString("yyyy-MM-dd HH:mm:ss") },
+                    { "Estado", turno.Estado.ToString() },
+                    { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
+                    { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
+                    { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
+                    { "Duracion", turno.Duracion.ToString() }
+                }
             };
 
             await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
     }
-
 }
