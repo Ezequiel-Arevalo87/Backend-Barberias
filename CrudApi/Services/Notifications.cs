@@ -1,7 +1,6 @@
 ﻿using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
-using System.Globalization;
 using CrudApi.Models;
 
 namespace CrudApi.Notifications
@@ -85,7 +84,8 @@ namespace CrudApi.Notifications
                     { "ServicioNombre", turno.ServicioNombre ?? "" },
                     { "Duracion", turno.Duracion.ToString() },
                     { "title", title },
-                    { "body", body }
+                    { "body", body },
+                    { "uuid", Guid.NewGuid().ToString() } // 🔥 Evita colapsos
                 }
             };
 
@@ -166,7 +166,8 @@ namespace CrudApi.Notifications
                     { "ClienteNombre", turno.ClienteNombre ?? "" },
                     { "ClienteApellido", turno.ClienteApellido ?? "" },
                     { "ServicioNombre", turno.ServicioNombre ?? "" },
-                    { "Duracion", turno.Duracion.ToString() }
+                    { "Duracion", turno.Duracion.ToString() },
+                    { "uuid", Guid.NewGuid().ToString() }
                 }
             };
 
@@ -185,6 +186,16 @@ namespace CrudApi.Notifications
                     Title = title,
                     Body = body
                 },
+                Android = new AndroidConfig
+                {
+                    Priority = Priority.High,
+                    Notification = new AndroidNotification
+                    {
+                        ChannelId = "turno_notificaciones",
+                        Sound = "default",
+                        ClickAction = "FLUTTER_NOTIFICATION_CLICK"
+                    }
+                },
                 Data = new Dictionary<string, string>
                 {
                     { "TurnoId", turno.Id.ToString() },
@@ -195,7 +206,8 @@ namespace CrudApi.Notifications
                     { "ClienteNombre", turno.ClienteNombre ?? "" },
                     { "ClienteApellido", turno.ClienteApellido ?? "" },
                     { "ServicioNombre", turno.ServicioNombre ?? "" },
-                    { "Duracion", turno.Duracion.ToString() }
+                    { "Duracion", turno.Duracion.ToString() },
+                    { "uuid", Guid.NewGuid().ToString() }
                 }
             };
 
