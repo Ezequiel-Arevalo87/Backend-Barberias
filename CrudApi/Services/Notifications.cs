@@ -1,5 +1,5 @@
-﻿using FirebaseAdmin.Messaging;
-using FirebaseAdmin;
+﻿using FirebaseAdmin;
+using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
 using System.Globalization;
 using CrudApi.Models;
@@ -16,7 +16,6 @@ namespace CrudApi.Notifications
             _configuration = configuration;
 
             string firebaseJson = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS_JSON");
-
             if (string.IsNullOrEmpty(firebaseJson))
             {
                 string rutaArchivo = _configuration["FirebaseCredentialsPath"];
@@ -34,7 +33,6 @@ namespace CrudApi.Notifications
                     {
                         Credential = GoogleCredential.FromJson(firebaseJson)
                     });
-
                     firebaseInitialized = true;
                     Console.WriteLine("✅ FirebaseApp inicializado correctamente.");
                 }
@@ -43,18 +41,15 @@ namespace CrudApi.Notifications
                     Console.WriteLine($"⚠️ Error al inicializar FirebaseApp: {ex.Message}");
                 }
             }
-            else
-            {
-                Console.WriteLine("ℹ️ FirebaseApp ya estaba inicializado.");
-            }
         }
 
         public async Task<string> SendNotificationAsync(string token, TurnoDTO turno)
         {
-            var fechaLocal = DateTime.SpecifyKind(turno.FechaHoraInicio, DateTimeKind.Local);
             Console.WriteLine($"🟠 Enviando notificación...");
             Console.WriteLine($"📲 Token: {token}");
-            Console.WriteLine($"📅 FechaHoraInicio: {fechaLocal} (Kind: {fechaLocal.Kind})");
+            Console.WriteLine($"📅 FechaHoraInicio: {turno.FechaHoraInicio}");
+
+            var fechaLocal = ConvertirAHoraLocalColombia(turno.FechaHoraInicio);
 
             string title = "📅 Turno Agendado";
             string body = $"Tienes un nuevo turno con {turno.ClienteNombre} el {fechaLocal:dd/MM/yyyy} a las {fechaLocal:hh:mm tt}. Servicio: {turno.ServicioNombre}";
@@ -130,7 +125,8 @@ namespace CrudApi.Notifications
 
         public async Task EnviarNotificacionCambioEstadoAsync(string token, TurnoDTO turno)
         {
-            var fechaLocal = DateTime.SpecifyKind(turno.FechaHoraInicio, DateTimeKind.Local);
+            var fechaLocal = ConvertirAHoraLocalColombia(turno.FechaHoraInicio);
+
             string estadoTexto = turno.Estado switch
             {
                 EstadoTurno.EnProceso => "🟠 Tu turno ha comenzado.",
@@ -179,9 +175,9 @@ namespace CrudApi.Notifications
 
         private async Task EnviarMensajePersonalizado(string token, TurnoDTO turno, string title, string body)
         {
-            var fechaLocal = DateTime.SpecifyKind(turno.FechaHoraInicio, DateTimeKind.Local);
+            var fechaLocal = ConvertirAHoraLocalColombia(turno.FechaHoraInicio);
 
-            var message = new Message
+            var message = new Message()
             {
                 Token = token,
                 Notification = new Notification
@@ -196,14 +192,23 @@ namespace CrudApi.Notifications
                     { "ClienteId", turno.ClienteId.ToString() },
                     { "FechaHoraInicio", fechaLocal.ToString("yyyy-MM-dd HH:mm:ss") },
                     { "Estado", turno.Estado.ToString() },
-                    { "ClienteNombre", turno.ClienteNombre ?? string.Empty },
-                    { "ClienteApellido", turno.ClienteApellido ?? string.Empty },
-                    { "ServicioNombre", turno.ServicioNombre ?? string.Empty },
+                    { "ClienteNombre", turno.ClienteNombre ?? "" },
+                    { "ClienteApellido", turno.ClienteApellido ?? "" },
+                    { "ServicioNombre", turno.ServicioNombre ?? "" },
                     { "Duracion", turno.Duracion.ToString() }
                 }
             };
 
             await FirebaseMessaging.DefaultInstance.SendAsync(message);
+        }
+
+        private DateTime ConvertirAHoraLocalColombia(DateTime fechaUtc)
+        {
+            TimeZoneInfo zonaColombia = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+            return TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.SpecifyKind(fechaUtc, DateTimeKind.Utc),
+                zonaColombia
+            );
         }
     }
 }
