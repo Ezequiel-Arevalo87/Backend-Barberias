@@ -53,20 +53,31 @@ namespace CrudApi.Notifications
         public async Task<string> SendNotificationAsync(string token, TurnoDTO turno)
         {
             var cultura = new CultureInfo("es-CO");
-
-            // ✅ Ajuste manual a hora local de Colombia
             var fechaLocal = turno.FechaHoraInicio.AddHours(-5);
 
             string title = "📅 Turno Agendado";
-            string body = $"Tu turno fue agendado con {turno.BarberoNombre} el {fechaLocal:dd/MM/yyyy} a las {fechaLocal:hh:mm tt}. Servicio: {turno.ServicioNombre}";
+            string body = $"Tienes un nuevo turno con {turno.ClienteNombre} el {fechaLocal:dd/MM/yyyy} a las {fechaLocal:hh:mm tt}. Servicio: {turno.ServicioNombre}";
 
             var message = new Message()
             {
                 Token = token,
+                Notification = new Notification
+                {
+                    Title = title,
+                    Body = body
+                },
+                Android = new AndroidConfig
+                {
+                    Priority = Priority.High,
+                    Notification = new AndroidNotification
+                    {
+                        ChannelId = "turno_notificaciones",
+                        Sound = "default",
+                        ClickAction = "FLUTTER_NOTIFICATION_CLICK" // o el que uses
+                    }
+                },
                 Data = new Dictionary<string, string>
         {
-            { "title", title },
-            { "body", body },
             { "tipo", "ACTUALIZAR_TURNO" },
             { "TurnoId", turno.Id.ToString() },
             { "BarberoId", turno.BarberoId.ToString() },
@@ -76,13 +87,14 @@ namespace CrudApi.Notifications
             { "ClienteNombre", turno.ClienteNombre ?? "" },
             { "ClienteApellido", turno.ClienteApellido ?? "" },
             { "ServicioNombre", turno.ServicioNombre ?? "" },
-            { "Duracion", turno.Duracion.ToString() }
+            { "Duracion", turno.Duracion.ToString() },
+            { "title", title },
+            { "body", body }
         }
             };
 
             return await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
-
 
         public async Task EnviarNotificacionCancelacionClienteAsync(string token, TurnoDTO turno, string motivo)
         {
