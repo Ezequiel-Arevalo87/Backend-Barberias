@@ -248,6 +248,7 @@ public class TurnoService : ITurnoService
             ServicioPrecio = turno.Servicio?.Precio ?? 0,
             ServicioPrecioEspecial = turno.Servicio?.PrecioEspecial,
             BarberoNombre = turno.Barbero?.Usuario.Nombre ?? "",
+            MotivoCancelacion = turno.MotivoCancelacion,
         };
     }
 
