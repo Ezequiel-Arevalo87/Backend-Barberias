@@ -257,13 +257,13 @@ public class TurnoService : ITurnoService
     {
         var query = _context.Turnos
           .Include(t => t.Cliente)
-              .ThenInclude(c => c.Usuario)
+          .ThenInclude(c => c.Usuario)
           .Include(t => t.Servicio)
           .Include(t => t.Barbero)
-              .ThenInclude(b => b.Usuario)
+          .ThenInclude(b => b.Usuario)
           .Include(t => t.Barbero)
-              .ThenInclude(b => b.Barberia)
-                  .ThenInclude(barb => barb.Usuario)
+          .ThenInclude(b => b.Barberia)
+          .ThenInclude(barb => barb.Usuario)
           .Where(t => t.BarberoId == barberoId)
           .AsQueryable();
 
