@@ -256,12 +256,17 @@ public class TurnoService : ITurnoService
     public async Task<List<TurnoDTO>> ObtenerTurnosDelBarberoAsync(int barberoId, FiltroReporteTurnoDTO filtro)
     {
         var query = _context.Turnos
-            .Include(t => t.Cliente)
-            .Include(t => t.Servicio)
-            .Include(t => t.Barbero)
-                .ThenInclude(b => b.Barberia) // solo si usas BarberiaNombre
-            .Where(t => t.BarberoId == barberoId)
-            .AsQueryable();
+          .Include(t => t.Cliente)
+              .ThenInclude(c => c.Usuario)
+          .Include(t => t.Servicio)
+          .Include(t => t.Barbero)
+              .ThenInclude(b => b.Usuario)
+          .Include(t => t.Barbero)
+              .ThenInclude(b => b.Barberia)
+                  .ThenInclude(barb => barb.Usuario)
+          .Where(t => t.BarberoId == barberoId)
+          .AsQueryable();
+
 
         if (filtro.FechaInicio.HasValue)
             query = query.Where(t => t.FechaHoraInicio >= filtro.FechaInicio.Value);
@@ -270,7 +275,6 @@ public class TurnoService : ITurnoService
             query = query.Where(t => t.FechaHoraInicio <= filtro.FechaFin.Value);
 
         var turnos = await query.ToListAsync();
-
         var resultado = turnos.Select(t => new TurnoDTO
         {
             Id = t.Id,
@@ -282,9 +286,9 @@ public class TurnoService : ITurnoService
             Duracion = t.Duracion,
             Estado = t.Estado,
 
-            ClienteNombre = t.Cliente?.Usuario.Nombre ?? "",
+            ClienteNombre = t.Cliente?.Usuario?.Nombre ?? "",
             ClienteApellido = t.Cliente?.Apellido ?? "",
-            ClienteEmail = t.Cliente?.Usuario.Correo ?? "",
+            ClienteEmail = t.Cliente?.Usuario?.Correo ?? "",
             ClienteFechaNacimiento = t.Cliente?.FechaNacimiento ?? DateTime.MinValue,
 
             ServicioNombre = t.Servicio?.Nombre ?? "",
@@ -292,11 +296,12 @@ public class TurnoService : ITurnoService
             ServicioPrecio = t.Servicio?.Precio ?? 0,
             ServicioPrecioEspecial = t.Servicio?.PrecioEspecial,
 
-            BarberoNombre = t.Barbero?.Usuario.Nombre ?? "",
-            BarberiaNombre = t.Barbero?.Barberia?.Usuario.Nombre ?? "",
+            BarberoNombre = t.Barbero?.Usuario?.Nombre ?? "",
+            BarberiaNombre = t.Barbero?.Barberia?.Usuario?.Nombre ?? "",
 
             MotivoCancelacion = t.MotivoCancelacion
         }).ToList();
+
 
         return resultado;
     }
