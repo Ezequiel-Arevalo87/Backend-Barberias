@@ -251,22 +251,19 @@ public class TurnoService : ITurnoService
             MotivoCancelacion = turno.MotivoCancelacion,
         };
     }
-
-
     public async Task<List<TurnoDTO>> ObtenerTurnosDelBarberoAsync(int barberoId, FiltroReporteTurnoDTO filtro)
     {
         var query = _context.Turnos
-          .Include(t => t.Cliente)
-          .ThenInclude(c => c.Usuario)
-          .Include(t => t.Servicio)
-          .Include(t => t.Barbero)
-          .ThenInclude(b => b.Usuario)
-          .Include(t => t.Barbero)
-          .ThenInclude(b => b.Barberia)
-          .ThenInclude(barb => barb.Usuario)
-          .Where(t => t.BarberoId == barberoId)
-          .AsQueryable();
-
+            .Include(t => t.Cliente)
+                .ThenInclude(c => c.Usuario)
+            .Include(t => t.Servicio)
+            .Include(t => t.Barbero)
+                .ThenInclude(b => b.Usuario)
+            .Include(t => t.Barbero)
+                .ThenInclude(b => b.Barberia)
+                    .ThenInclude(barb => barb.Usuario)
+            .Where(t => t.BarberoId == barberoId)
+            .AsQueryable();
 
         if (filtro.FechaInicio.HasValue)
             query = query.Where(t => t.FechaHoraInicio >= filtro.FechaInicio.Value);
@@ -275,6 +272,25 @@ public class TurnoService : ITurnoService
             query = query.Where(t => t.FechaHoraInicio <= filtro.FechaFin.Value);
 
         var turnos = await query.ToListAsync();
+
+        // 🔍 Filtrar turnos con datos incompletos
+        turnos = turnos.Where(t =>
+            t.Cliente != null &&
+            t.Cliente.Usuario != null &&
+            t.Barbero != null &&
+            t.Barbero.Usuario != null &&
+            t.Barbero.Barberia != null &&
+            t.Barbero.Barberia.Usuario != null &&
+            t.Servicio != null
+        ).ToList();
+
+        // 🧪 Log (opcional para debugging)
+        foreach (var t in turnos)
+        {
+            Console.WriteLine($"✔ TurnoID: {t.Id} - Cliente: {t.Cliente.Usuario.Nombre}, Barbero: {t.Barbero.Usuario.Nombre}, Servicio: {t.Servicio.Nombre}");
+        }
+
+        // 🧾 Proyección segura
         var resultado = turnos.Select(t => new TurnoDTO
         {
             Id = t.Id,
@@ -286,28 +302,23 @@ public class TurnoService : ITurnoService
             Duracion = t.Duracion,
             Estado = t.Estado,
 
-            ClienteNombre = t.Cliente != null && t.Cliente.Usuario != null ? t.Cliente.Usuario.Nombre : "",
-            ClienteApellido = t.Cliente?.Apellido ?? "",
-            ClienteEmail = t.Cliente != null && t.Cliente.Usuario != null ? t.Cliente.Usuario.Correo : "",
-            ClienteFechaNacimiento = t.Cliente?.FechaNacimiento ?? DateTime.MinValue,
+            ClienteNombre = t.Cliente.Usuario.Nombre,
+            ClienteApellido = t.Cliente.Apellido,
+            ClienteEmail = t.Cliente.Usuario.Correo,
+            ClienteFechaNacimiento = t.Cliente.FechaNacimiento,
 
-            ServicioNombre = t.Servicio?.Nombre ?? "",
-            ServicioDescripcion = t.Servicio?.Descripcion ?? "",
-            ServicioPrecio = t.Servicio?.Precio ?? 0,
-            ServicioPrecioEspecial = t.Servicio?.PrecioEspecial,
+            ServicioNombre = t.Servicio.Nombre,
+            ServicioDescripcion = t.Servicio.Descripcion,
+            ServicioPrecio = t.Servicio.Precio,
+            ServicioPrecioEspecial = t.Servicio.PrecioEspecial,
 
-            BarberoNombre = t.Barbero != null && t.Barbero.Usuario != null ? t.Barbero.Usuario.Nombre : "",
-            BarberiaNombre = t.Barbero != null && t.Barbero.Barberia != null && t.Barbero.Barberia.Usuario != null
-            ? t.Barbero.Barberia.Usuario.Nombre
-            : "",
+            BarberoNombre = t.Barbero.Usuario.Nombre,
+            BarberiaNombre = t.Barbero.Barberia.Usuario.Nombre,
 
             MotivoCancelacion = t.MotivoCancelacion
         }).ToList();
 
-
-
         return resultado;
     }
-
 
 }
