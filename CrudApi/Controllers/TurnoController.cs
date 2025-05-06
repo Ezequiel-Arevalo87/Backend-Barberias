@@ -91,7 +91,7 @@ public class TurnoController : ControllerBase
         return Ok(historial);
     }
     [HttpPost("barbero/reporte")]
-    [Authorize(Roles = "Barbero")]
+    [Authorize]
     public async Task<IActionResult> ObtenerTurnosBarbero([FromBody] FiltroReporteTurnoDTO filtro)
     {
         var usuarioIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
