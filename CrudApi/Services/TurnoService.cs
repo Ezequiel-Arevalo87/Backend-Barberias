@@ -246,7 +246,8 @@ public class TurnoService : ITurnoService
             ServicioNombre = turno.Servicio?.Nombre ?? string.Empty,
             ServicioDescripcion = turno.Servicio?.Descripcion ?? string.Empty,
             ServicioPrecio = turno.Servicio?.Precio ?? 0,
-            ServicioPrecioEspecial = turno.Servicio?.PrecioEspecial
+            ServicioPrecioEspecial = turno.Servicio?.PrecioEspecial,
+            BarberoNombre = turno.Barbero?.Usuario.Nombre ?? "",
         };
     }
 
