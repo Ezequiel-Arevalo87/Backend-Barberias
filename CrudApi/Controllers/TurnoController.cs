@@ -90,22 +90,40 @@ public class TurnoController : ControllerBase
         var historial = await _turnoService.ObtenerHistorialPorClienteAsync(clienteId);
         return Ok(historial);
     }
-
     [HttpPost("barbero/reporte")]
     [Authorize(Roles = "Barbero")]
     public async Task<IActionResult> ObtenerTurnosBarbero([FromBody] FiltroReporteTurnoDTO filtro)
     {
-        var usuarioId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        try
+        {
+            var usuarioId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        var barbero = await _context.Barberos // ✅ Correcto
+            Console.WriteLine($"🧾 usuarioId del token: {usuarioId}");
 
-            .FirstOrDefaultAsync(b => b.UsuarioId.ToString() == usuarioId);
+            if (string.IsNullOrEmpty(usuarioId))
+                return Unauthorized("Token inválido: usuarioId no encontrado.");
 
-        if (barbero == null)
-            return Unauthorized("No se encontró el barbero autenticado.");
+            var barbero = await _context.Barberos
+                .Include(b => b.Barberia) // opcional si necesitas info de barbería
+                .FirstOrDefaultAsync(b => b.UsuarioId.ToString() == usuarioId);
 
-        var turnos = await _turnoService.ObtenerTurnosDelBarberoAsync(barbero.Id, filtro);
-        return Ok(turnos);
+            if (barbero == null)
+            {
+                Console.WriteLine("❌ No se encontró el barbero con ese usuarioId.");
+                return Unauthorized("No se encontró el barbero autenticado.");
+            }
+
+            Console.WriteLine($"✅ Barbero autenticado: {barbero.Id} - {barbero.Usuario.Nombre}");
+
+            var turnos = await _turnoService.ObtenerTurnosDelBarberoAsync(barbero.Id, filtro);
+
+            return Ok(turnos);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("❌ Error interno al consultar los turnos del barbero: " + ex.Message);
+            return StatusCode(500, "Error interno al generar el reporte del barbero.");
+        }
     }
 
 
