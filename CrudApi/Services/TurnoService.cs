@@ -282,14 +282,18 @@ public class TurnoService : ITurnoService
             Estado = t.Estado,
             ClienteNombre = t.Cliente?.Usuario.Nombre ?? "",
             ClienteApellido = t.Cliente?.Apellido ?? "",
+            ClienteEmail = t.Cliente?.Usuario.Correo ?? "",
+            ClienteFechaNacimiento = t.Cliente?.FechaNacimiento ?? DateTime.MinValue,
             ServicioNombre = t.Servicio?.Nombre ?? "",
             ServicioDescripcion = t.Servicio?.Descripcion ?? "",
             ServicioPrecio = t.Servicio?.Precio ?? 0,
             ServicioPrecioEspecial = t.Servicio?.PrecioEspecial,
             BarberoNombre = t.Barbero?.Usuario.Nombre ?? "",
-            BarberiaNombre = t.Barbero?.Barberia?.Usuario.Nombre ?? ""
+            BarberiaNombre = t.Barbero?.Barberia?.Usuario.Nombre ?? "",
+            MotivoCancelacion = t.MotivoCancelacion
         }).ToList();
     }
+
 
 
 }
