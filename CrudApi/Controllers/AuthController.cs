@@ -5,6 +5,8 @@ using CrudApi.Services; // ✅ Agregamos el namespace donde estará EmailService
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TuProyectoNamespace.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -77,4 +79,7 @@ public class AuthController : ControllerBase
         else
             return StatusCode(500, "❌ Error enviando correo.");
     }
+
+  
+
 }

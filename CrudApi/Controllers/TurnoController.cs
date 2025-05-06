@@ -1,7 +1,11 @@
-﻿using CrudApi.DTOs;
+﻿using CrudApi.Data;
+using CrudApi.DTOs;
 using CrudApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 [ApiController]
@@ -9,10 +13,14 @@ using System.Threading.Tasks;
 public class TurnoController : ControllerBase
 {
     private readonly ITurnoService _turnoService;
+    private readonly ApplicationDbContext _context;
 
-    public TurnoController(ITurnoService turnoService)
+
+    public TurnoController(ITurnoService turnoService, ApplicationDbContext context)
     {
         _turnoService = turnoService;
+        _context = context; // ✅ listo
+
     }
 
     // Obtener todos los turnos o filtrados por barbero
@@ -82,5 +90,23 @@ public class TurnoController : ControllerBase
         var historial = await _turnoService.ObtenerHistorialPorClienteAsync(clienteId);
         return Ok(historial);
     }
+
+    [HttpPost("barbero/reporte")]
+    [Authorize(Roles = "Barbero")]
+    public async Task<IActionResult> ObtenerTurnosBarbero([FromBody] FiltroReporteTurnoDTO filtro)
+    {
+        var usuarioId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        var barbero = await _context.Barberos // ✅ Correcto
+
+            .FirstOrDefaultAsync(b => b.UsuarioId.ToString() == usuarioId);
+
+        if (barbero == null)
+            return Unauthorized("No se encontró el barbero autenticado.");
+
+        var turnos = await _turnoService.ObtenerTurnosDelBarberoAsync(barbero.Id, filtro);
+        return Ok(turnos);
+    }
+
 
 }

@@ -252,4 +252,44 @@ public class TurnoService : ITurnoService
         };
     }
 
+
+    public async Task<List<TurnoDTO>> ObtenerTurnosDelBarberoAsync(int barberoId, FiltroReporteTurnoDTO filtro)
+    {
+        var query = _context.Turnos
+            .Include(t => t.Cliente)
+            .Include(t => t.Servicio)
+            .Include(t => t.Barbero)
+            .Where(t => t.BarberoId == barberoId)
+            .AsQueryable();
+
+        if (filtro.FechaInicio.HasValue)
+            query = query.Where(t => t.FechaHoraInicio >= filtro.FechaInicio.Value);
+
+        if (filtro.FechaFin.HasValue)
+            query = query.Where(t => t.FechaHoraInicio <= filtro.FechaFin.Value);
+
+        var turnos = await query.ToListAsync();
+
+        return turnos.Select(t => new TurnoDTO
+        {
+            Id = t.Id,
+            BarberoId = t.BarberoId,
+            ClienteId = t.ClienteId,
+            ServicioId = t.ServicioId,
+            FechaHoraInicio = t.FechaHoraInicio,
+            HoraFin = t.FechaHoraInicio.Add(t.Duracion),
+            Duracion = t.Duracion,
+            Estado = t.Estado,
+            ClienteNombre = t.Cliente?.Usuario.Nombre ?? "",
+            ClienteApellido = t.Cliente?.Apellido ?? "",
+            ServicioNombre = t.Servicio?.Nombre ?? "",
+            ServicioDescripcion = t.Servicio?.Descripcion ?? "",
+            ServicioPrecio = t.Servicio?.Precio ?? 0,
+            ServicioPrecioEspecial = t.Servicio?.PrecioEspecial,
+            BarberoNombre = t.Barbero?.Usuario.Nombre ?? "",
+            BarberiaNombre = t.Barbero?.Barberia?.Usuario.Nombre ?? ""
+        }).ToList();
+    }
+
+
 }
