@@ -275,14 +275,12 @@ public class TurnoService : ITurnoService
 
         // 🔍 Filtrar turnos con datos incompletos
         turnos = turnos.Where(t =>
-            t.Cliente != null &&
-            t.Cliente.Usuario != null &&
-            t.Barbero != null &&
-            t.Barbero.Usuario != null &&
-            t.Barbero.Barberia != null &&
-            t.Barbero.Barberia.Usuario != null &&
-            t.Servicio != null
-        ).ToList();
+       t.Cliente?.Usuario != null &&
+       t.Barbero?.Usuario != null &&
+       t.Barbero?.Barberia?.Usuario != null &&
+       t.Servicio != null
+   ).ToList();
+
 
         // 🧪 Log (opcional para debugging)
         foreach (var t in turnos)
