@@ -259,6 +259,7 @@ public class TurnoService : ITurnoService
             .Include(t => t.Cliente)
             .Include(t => t.Servicio)
             .Include(t => t.Barbero)
+                .ThenInclude(b => b.Barberia) // solo si usas BarberiaNombre
             .Where(t => t.BarberoId == barberoId)
             .AsQueryable();
 
@@ -270,7 +271,7 @@ public class TurnoService : ITurnoService
 
         var turnos = await query.ToListAsync();
 
-        return turnos.Select(t => new TurnoDTO
+        var resultado = turnos.Select(t => new TurnoDTO
         {
             Id = t.Id,
             BarberoId = t.BarberoId,
@@ -280,20 +281,25 @@ public class TurnoService : ITurnoService
             HoraFin = t.FechaHoraInicio.Add(t.Duracion),
             Duracion = t.Duracion,
             Estado = t.Estado,
+
             ClienteNombre = t.Cliente?.Usuario.Nombre ?? "",
             ClienteApellido = t.Cliente?.Apellido ?? "",
             ClienteEmail = t.Cliente?.Usuario.Correo ?? "",
             ClienteFechaNacimiento = t.Cliente?.FechaNacimiento ?? DateTime.MinValue,
+
             ServicioNombre = t.Servicio?.Nombre ?? "",
             ServicioDescripcion = t.Servicio?.Descripcion ?? "",
             ServicioPrecio = t.Servicio?.Precio ?? 0,
             ServicioPrecioEspecial = t.Servicio?.PrecioEspecial,
+
             BarberoNombre = t.Barbero?.Usuario.Nombre ?? "",
             BarberiaNombre = t.Barbero?.Barberia?.Usuario.Nombre ?? "",
+
             MotivoCancelacion = t.MotivoCancelacion
         }).ToList();
-    }
 
+        return resultado;
+    }
 
 
 }
