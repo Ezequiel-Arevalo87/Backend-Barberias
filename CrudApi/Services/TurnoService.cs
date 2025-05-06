@@ -286,9 +286,9 @@ public class TurnoService : ITurnoService
             Duracion = t.Duracion,
             Estado = t.Estado,
 
-            ClienteNombre = t.Cliente?.Usuario?.Nombre ?? "",
+            ClienteNombre = t.Cliente != null && t.Cliente.Usuario != null ? t.Cliente.Usuario.Nombre : "",
             ClienteApellido = t.Cliente?.Apellido ?? "",
-            ClienteEmail = t.Cliente?.Usuario?.Correo ?? "",
+            ClienteEmail = t.Cliente != null && t.Cliente.Usuario != null ? t.Cliente.Usuario.Correo : "",
             ClienteFechaNacimiento = t.Cliente?.FechaNacimiento ?? DateTime.MinValue,
 
             ServicioNombre = t.Servicio?.Nombre ?? "",
@@ -296,11 +296,14 @@ public class TurnoService : ITurnoService
             ServicioPrecio = t.Servicio?.Precio ?? 0,
             ServicioPrecioEspecial = t.Servicio?.PrecioEspecial,
 
-            BarberoNombre = t.Barbero?.Usuario?.Nombre ?? "",
-            BarberiaNombre = t.Barbero?.Barberia?.Usuario?.Nombre ?? "",
+            BarberoNombre = t.Barbero != null && t.Barbero.Usuario != null ? t.Barbero.Usuario.Nombre : "",
+            BarberiaNombre = t.Barbero != null && t.Barbero.Barberia != null && t.Barbero.Barberia.Usuario != null
+            ? t.Barbero.Barberia.Usuario.Nombre
+            : "",
 
             MotivoCancelacion = t.MotivoCancelacion
         }).ToList();
+
 
 
         return resultado;
