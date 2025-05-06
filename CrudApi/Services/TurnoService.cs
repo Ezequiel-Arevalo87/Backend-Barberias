@@ -78,10 +78,11 @@ public class TurnoService : ITurnoService
         var turnoDTO = MapTurnoToDTO(turno);
 
         if (!string.IsNullOrWhiteSpace(turno.Cliente?.NotificationToken))
-            await _notificationsService.SendNotificationAsync(turno.Cliente.NotificationToken, turnoDTO);
+            await _notificationsService.SendNotificationAsync(turno.Cliente.NotificationToken, turnoDTO, true); // ✅ para el cliente
 
         if (!string.IsNullOrWhiteSpace(turno.Barbero?.NotificationToken))
-            await _notificationsService.SendNotificationAsync(turno.Barbero.NotificationToken, turnoDTO);
+            await _notificationsService.SendNotificationAsync(turno.Barbero.NotificationToken, turnoDTO, false); // ✅ para el barbero
+
 
         turno.Notificado = true;
         await _context.SaveChangesAsync();
@@ -186,9 +187,9 @@ public class TurnoService : ITurnoService
     }
 
 
-    public async Task EnviarNotificacionManualAsync(string token, TurnoDTO turnoDTO)
+    public async Task EnviarNotificacionManualAsync(string token, TurnoDTO turnoDTO, bool paraCliente)
     {
-        await _notificationsService.SendNotificationAsync(token, turnoDTO);
+        await _notificationsService.SendNotificationAsync(token, turnoDTO, paraCliente);
     }
 
     public async Task<List<HorarioTurnoDTO>> ObtenerHorariosReservadosPorBarberoYFechaAsync(int barberoId, DateTime fecha)

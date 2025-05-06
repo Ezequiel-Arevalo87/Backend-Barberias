@@ -42,7 +42,7 @@ namespace CrudApi.Notifications
             }
         }
 
-        public async Task<string> SendNotificationAsync(string token, TurnoDTO turno)
+        public async Task<string> SendNotificationAsync(string token, TurnoDTO turno, bool paraCliente)
         {
             Console.WriteLine($"🟠 Enviando notificación...");
             Console.WriteLine($"📲 Token: {token}");
@@ -50,8 +50,10 @@ namespace CrudApi.Notifications
 
             var fechaLocal = ConvertirAHoraLocalColombia(turno.FechaHoraInicio);
 
-            string title = "📅 Turno Agendado";
-            string body = $"Tienes un nuevo turno con {turno.ClienteNombre} el {fechaLocal:dd/MM/yyyy} a las {fechaLocal:hh:mm tt}. Servicio: {turno.ServicioNombre}";
+            string title = paraCliente ? "📅 Tu turno fue agendado" : "📅 Turno Agendado";
+            string body = paraCliente
+                ? $"Con {turno.BarberoNombre} el {fechaLocal:dd/MM/yyyy} a las {fechaLocal:hh:mm tt}. Servicio: {turno.ServicioNombre}"
+                : $"Tienes un nuevo turno con {turno.ClienteNombre} el {fechaLocal:dd/MM/yyyy} a las {fechaLocal:hh:mm tt}. Servicio: {turno.ServicioNombre}";
 
             var message = new Message
             {
@@ -72,21 +74,22 @@ namespace CrudApi.Notifications
                     }
                 },
                 Data = new Dictionary<string, string>
-                {
-                    { "tipo", "ACTUALIZAR_TURNO" },
-                    { "TurnoId", turno.Id.ToString() },
-                    { "BarberoId", turno.BarberoId.ToString() },
-                    { "ClienteId", turno.ClienteId.ToString() },
-                    { "FechaHoraInicio", fechaLocal.ToString("yyyy-MM-dd HH:mm:ss") },
-                    { "Estado", turno.Estado.ToString() },
-                    { "ClienteNombre", turno.ClienteNombre ?? "" },
-                    { "ClienteApellido", turno.ClienteApellido ?? "" },
-                    { "ServicioNombre", turno.ServicioNombre ?? "" },
-                    { "Duracion", turno.Duracion.ToString() },
-                    { "title", title },
-                    { "body", body },
-                    { "uuid", Guid.NewGuid().ToString() } // 🔥 Evita colapsos
-                }
+        {
+            { "tipo", "ACTUALIZAR_TURNO" },
+            { "TurnoId", turno.Id.ToString() },
+            { "BarberoId", turno.BarberoId.ToString() },
+            { "ClienteId", turno.ClienteId.ToString() },
+            { "FechaHoraInicio", fechaLocal.ToString("yyyy-MM-dd HH:mm:ss") },
+            { "Estado", turno.Estado.ToString() },
+            { "ClienteNombre", turno.ClienteNombre ?? "" },
+            { "ClienteApellido", turno.ClienteApellido ?? "" },
+            { "BarberoNombre", turno.BarberoNombre ?? "" },
+            { "ServicioNombre", turno.ServicioNombre ?? "" },
+            { "Duracion", turno.Duracion.ToString() },
+            { "title", title },
+            { "body", body },
+            { "uuid", Guid.NewGuid().ToString() }
+        }
             };
 
             try
@@ -101,6 +104,7 @@ namespace CrudApi.Notifications
                 return "ERROR";
             }
         }
+
 
         public async Task EnviarNotificacionCancelacionClienteAsync(string token, TurnoDTO turno, string motivo)
         {

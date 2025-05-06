@@ -50,11 +50,11 @@ public class TurnoController : ControllerBase
 
     // Notificación manual (usado en pruebas o admin)
     [HttpPost("notificar")]
-    public async Task<IActionResult> NotificarTurno(string token, [FromBody] TurnoDTO turnoDTO)
+    public async Task<IActionResult> NotificarTurno(string token, [FromBody] TurnoDTO turnoDTO, [FromQuery] bool paraCliente = false)
     {
         try
         {
-            await _turnoService.EnviarNotificacionManualAsync(token, turnoDTO);
+            await _turnoService.EnviarNotificacionManualAsync(token, turnoDTO, paraCliente);
             return Ok(new { mensaje = "Notificación enviada" });
         }
         catch (Exception ex)
@@ -62,6 +62,7 @@ public class TurnoController : ControllerBase
             return StatusCode(500, $"Error al enviar la notificación: {ex.Message}");
         }
     }
+
 
     // Cancelar turno
     [HttpPut("cancelar")]
