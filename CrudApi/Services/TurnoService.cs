@@ -16,6 +16,22 @@ public class TurnoService : ITurnoService
         _notificationsService = notificationsService;
     }
 
+    //public async Task<List<TurnoDTO>> ObtenerTurnosAsync(int? barberoId)
+    //{
+    //    var query = _context.Turnos
+    //        .Include(t => t.Cliente).ThenInclude(c => c.Usuario)
+    //        .Include(t => t.Servicio)
+    //        .AsQueryable();
+
+    //    if (barberoId.HasValue)
+    //    {
+    //        query = query.Where(t => t.BarberoId == barberoId.Value);
+    //    }
+
+    //    var turnos = await query.ToListAsync();
+    //    return turnos.Select(t => MapTurnoToDTO(t)).ToList();
+    //}
+
     public async Task<List<TurnoDTO>> ObtenerTurnosAsync(int? barberoId)
     {
         var query = _context.Turnos
@@ -29,7 +45,38 @@ public class TurnoService : ITurnoService
         }
 
         var turnos = await query.ToListAsync();
-        return turnos.Select(t => MapTurnoToDTO(t)).ToList();
+        var zonaColombia = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+
+        return turnos.Select(t =>
+        {
+            var fechaLocal = TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.SpecifyKind(t.FechaHoraInicio, DateTimeKind.Utc), zonaColombia
+            );
+
+            return new TurnoDTO
+            {
+                Id = t.Id,
+                BarberoId = t.BarberoId,
+                ServicioId = t.ServicioId,
+                ClienteId = t.ClienteId,
+                FechaHoraInicio = fechaLocal,
+                HoraFin = fechaLocal.Add(t.Duracion),
+                Fecha = fechaLocal.Date,
+                Duracion = t.Duracion,
+                Estado = t.Estado,
+                ClienteNombre = t.Cliente?.Usuario?.Nombre ?? string.Empty,
+                ClienteApellido = t.Cliente?.Apellido ?? string.Empty,
+                ClienteEmail = t.Cliente?.Usuario?.Correo ?? string.Empty,
+                ClienteFechaNacimiento = t.Cliente?.FechaNacimiento ?? DateTime.MinValue,
+                ServicioNombre = t.Servicio?.Nombre ?? string.Empty,
+                ServicioDescripcion = t.Servicio?.Descripcion ?? string.Empty,
+                ServicioPrecio = t.Servicio?.Precio ?? 0,
+                ServicioPrecioEspecial = t.Servicio?.PrecioEspecial,
+                BarberoNombre = t.Barbero?.Usuario?.Nombre ?? "",
+                MotivoCancelacion = t.MotivoCancelacion
+            };
+        }).ToList();
+
     }
 
     public async Task<TurnoDTO> CrearTurnoAsync(TurnoCreateDTO turnoCreateDTO)
