@@ -13,8 +13,11 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
     public async Task<bool> CrearBloqueoAsync(CrearHorarioBloqueadoDTO dto)
     {
         var fechaBase = dto.Fecha.Date;
-        var bloqueInicio = fechaBase.Add(dto.HoraInicio);
-        var bloqueFin = fechaBase.Add(dto.HoraFin);
+        
+
+        var bloqueInicio = DateTime.SpecifyKind(fechaBase.Add(dto.HoraInicio), DateTimeKind.Utc);
+        var bloqueFin = DateTime.SpecifyKind(fechaBase.Add(dto.HoraFin), DateTimeKind.Utc);
+
 
         var tieneTurnos = await _context.Turnos.AnyAsync(t =>
             t.BarberoId == dto.BarberoId &&
@@ -26,6 +29,13 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
         if (tieneTurnos)
         {
             Console.WriteLine($"⛔ Se detectó cruce con turno para el barbero {dto.BarberoId} entre {bloqueInicio} y {bloqueFin}");
+            Console.WriteLine($"📦 dto.Fecha: {dto.Fecha}");
+            Console.WriteLine($"🕓 dto.HoraInicio: {dto.HoraInicio}");
+            Console.WriteLine($"🕕 dto.HoraFin: {dto.HoraFin}");
+            Console.WriteLine($"📌 bloqueInicio: {bloqueInicio}");
+            Console.WriteLine($"📌 bloqueFin: {bloqueFin}");
+
+
             throw new InvalidOperationException("No se puede bloquear este horario porque ya hay turnos asignados.");
         }
 
