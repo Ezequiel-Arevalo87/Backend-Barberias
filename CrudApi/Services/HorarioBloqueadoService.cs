@@ -13,7 +13,9 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
 
     public async Task<bool> CrearBloqueoAsync(CrearHorarioBloqueadoDTO dto)
     {
-        var fechaBase = DateTime.SpecifyKind(dto.Fecha.Date, DateTimeKind.Local);
+        var fechaBase = dto.Fecha.Date;
+
+        // 🔒 Estas horas se interpretan como Local, sin UTC
         var bloqueInicio = DateTime.SpecifyKind(fechaBase.Add(dto.HoraInicio), DateTimeKind.Local);
         var bloqueFin = DateTime.SpecifyKind(fechaBase.Add(dto.HoraFin), DateTimeKind.Local);
 
@@ -23,17 +25,22 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
         Console.WriteLine($"📌 bloqueInicio: {bloqueInicio} ({bloqueInicio.Kind})");
         Console.WriteLine($"📌 bloqueFin: {bloqueFin} ({bloqueFin.Kind})");
 
-        var tieneTurnos = await _context.Turnos.AnyAsync(t =>
-            t.BarberoId == dto.BarberoId &&
-            (t.Estado == EstadoTurno.Pendiente || t.Estado == EstadoTurno.EnProceso) &&
-            EF.Functions.DateDiffDay(t.FechaHoraInicio, bloqueInicio) == 0 && // Usa EF si no puedes usar TruncateTime
-            t.FechaHoraInicio < bloqueFin &&
-            t.HoraFin > bloqueInicio
-        );
+        var turnos = await _context.Turnos
+            .Where(t =>
+                t.BarberoId == dto.BarberoId &&
+                (t.Estado == EstadoTurno.Pendiente || t.Estado == EstadoTurno.EnProceso) &&
+                t.FechaHoraInicio < bloqueFin &&
+                t.HoraFin > bloqueInicio
+            )
+            .ToListAsync();
 
-        if (tieneTurnos)
+        if (turnos.Any())
         {
-            Console.WriteLine($"⛔ Se detectó cruce con turno para el barbero {dto.BarberoId} entre {bloqueInicio} y {bloqueFin}");
+            foreach (var t in turnos)
+            {
+                Console.WriteLine($"❗ Turno en conflicto: {t.Id} | {t.FechaHoraInicio} - {t.HoraFin}");
+            }
+
             throw new InvalidOperationException("No se puede bloquear este horario porque ya hay turnos asignados.");
         }
 
