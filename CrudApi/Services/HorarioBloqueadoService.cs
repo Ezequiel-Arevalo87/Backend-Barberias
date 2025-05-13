@@ -1,4 +1,5 @@
 ﻿using CrudApi.Data;
+using CrudApi.DTOs;
 using CrudApi.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,12 +39,7 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
 
         if (turnosEnConflicto.Any())
         {
-            Console.WriteLine($"⛔ Se detectó cruce con turno para el barbero {dto.BarberoId} entre {bloqueInicio} y {bloqueFin} (hora local)");
-            Console.WriteLine($"📦 dto.Fecha: {dto.Fecha}");
-            Console.WriteLine($"🕓 dto.HoraInicio: {dto.HoraInicio}");
-            Console.WriteLine($"🕕 dto.HoraFin: {dto.HoraFin}");
-            Console.WriteLine($"📌 bloqueInicio: {bloqueInicio} (Local)");
-            Console.WriteLine($"📌 bloqueFin: {bloqueFin} (Local)");
+           
 
             throw new InvalidOperationException("No se puede bloquear este horario porque ya hay turnos asignados.");
         }
@@ -61,4 +57,25 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
         await _context.SaveChangesAsync();
         return true;
     }
+    public async Task<List<HorarioTurnoDTO>> ObtenerBloqueosAsync(int barberoId, DateTime fecha)
+    {
+        var zonaColombia = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+
+        var bloqueos = await _context.HorariosBloqueados
+            .Where(h => h.BarberoId == barberoId && h.Fecha.Date == fecha.Date)
+            .ToListAsync();
+
+        var resultado = bloqueos.Select(b =>
+        {
+            var inicioLocal = TimeZoneInfo.ConvertTime(b.Fecha.Date + b.HoraInicio, zonaColombia);
+            return new HorarioTurnoDTO
+            {
+                Inicio = inicioLocal.ToString("HH:mm"),
+                Duracion = (int)(b.HoraFin - b.HoraInicio).TotalMinutes
+            };
+        }).ToList();
+
+        return resultado;
+    }
+
 }

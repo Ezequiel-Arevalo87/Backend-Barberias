@@ -24,4 +24,21 @@ public class HorarioBloqueadoController : ControllerBase
             return BadRequest(new { exito = false, mensaje = ex.Message });
         }
     }
+
+    [HttpGet("barbero/{barberoId}")]
+    public async Task<IActionResult> ObtenerBloqueos(int barberoId, [FromQuery] DateTime fecha)
+    {
+        try
+        {
+            var bloqueos = await _service.ObtenerBloqueosAsync(barberoId, fecha);
+            return Ok(bloqueos);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error al obtener bloqueos: {ex.Message}");
+            return BadRequest("No se pudieron obtener los horarios bloqueados.");
+        }
+    }
+
 }
+
