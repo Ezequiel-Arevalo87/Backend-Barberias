@@ -12,12 +12,10 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
     }
     public async Task<bool> CrearBloqueoAsync(CrearHorarioBloqueadoDTO dto)
     {
+        // Usar fecha local sin convertir a UTC
         var fechaBase = dto.Fecha.Date;
-        
-
-        var bloqueInicio = DateTime.SpecifyKind(fechaBase.Add(dto.HoraInicio), DateTimeKind.Utc);
-        var bloqueFin = DateTime.SpecifyKind(fechaBase.Add(dto.HoraFin), DateTimeKind.Utc);
-
+        var bloqueInicio = fechaBase.Add(dto.HoraInicio); // Local
+        var bloqueFin = fechaBase.Add(dto.HoraFin);       // Local
 
         var tieneTurnos = await _context.Turnos.AnyAsync(t =>
             t.BarberoId == dto.BarberoId &&
@@ -34,8 +32,6 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
             Console.WriteLine($"🕕 dto.HoraFin: {dto.HoraFin}");
             Console.WriteLine($"📌 bloqueInicio: {bloqueInicio}");
             Console.WriteLine($"📌 bloqueFin: {bloqueFin}");
-
-
             throw new InvalidOperationException("No se puede bloquear este horario porque ya hay turnos asignados.");
         }
 
@@ -52,5 +48,6 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
         await _context.SaveChangesAsync();
         return true;
     }
+
 }
 
