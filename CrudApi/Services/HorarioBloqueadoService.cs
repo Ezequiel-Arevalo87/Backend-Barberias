@@ -67,15 +67,18 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
 
         var resultado = bloqueos.Select(b =>
         {
-            var inicioLocal = TimeZoneInfo.ConvertTime(b.Fecha.Date + b.HoraInicio, zonaColombia);
+            var horaInicioLocal = b.Fecha.Date.Add(b.HoraInicio); // No se convierte a UTC
+            var duracion = (int)(b.HoraFin - b.HoraInicio).TotalMinutes;
+
             return new HorarioTurnoDTO
             {
-                Inicio = inicioLocal.ToString("HH:mm"),
-                Duracion = (int)(b.HoraFin - b.HoraInicio).TotalMinutes
+                Inicio = horaInicioLocal.ToString("HH:mm"),
+                Duracion = duracion
             };
         }).ToList();
 
         return resultado;
     }
+
 
 }
