@@ -56,6 +56,8 @@ builder.Services.AddScoped<ISucursalBarberiaService, SucursalBarberiaService>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddTransient<EmailService>();
+builder.Services.AddScoped<IHorarioBloqueadoService, HorarioBloqueadoService>();
+
 
 // 🔹 Configurar Hangfire
 builder.Services.AddHangfire(config =>

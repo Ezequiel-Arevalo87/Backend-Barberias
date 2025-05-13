@@ -14,11 +14,12 @@ namespace CrudApi.Data
         public DbSet<Service> Servicios { get; set; }
         public DbSet<TipoDocumento> TipoDocumento { get; set; }
         public DbSet<SucursalBarberia> SucursalesBarberia { get; set; }
-
         public DbSet<HorarioBarberia> HorariosBarberia { get; set; }
         public DbSet<Cliente> Clientes { get; set; }
         public DbSet<Turno> Turnos { get; set; }
 
+        // 🆕 Nuevo DbSet agregado
+        public DbSet<HorarioBloqueadoBarbero> HorariosBloqueados { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -96,6 +97,13 @@ namespace CrudApi.Data
                 .HasOne(t => t.Servicio)
                 .WithMany(s => s.Turnos)
                 .HasForeignKey(t => t.ServicioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 🆕 HorarioBloqueadoBarbero - Barbero
+            modelBuilder.Entity<HorarioBloqueadoBarbero>()
+                .HasOne(hb => hb.Barbero)
+                .WithMany()
+                .HasForeignKey(hb => hb.BarberoId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Índices Únicos
