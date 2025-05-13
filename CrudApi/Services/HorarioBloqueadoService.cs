@@ -13,15 +13,15 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
 
     public async Task<bool> CrearBloqueoAsync(CrearHorarioBloqueadoDTO dto)
     {
-        // Validar si hay turnos existentes en el rango a bloquear
-        var tieneTurnos = await _context.Turnos.AnyAsync(t =>
-      t.BarberoId == dto.BarberoId &&
-      t.FechaHoraInicio.Date == dto.Fecha.Date &&
-      t.FechaHoraInicio.TimeOfDay < dto.HoraFin &&
-      t.HoraFin.TimeOfDay > dto.HoraInicio &&
-      (t.Estado == EstadoTurno.Pendiente || t.Estado == EstadoTurno.EnProceso)
-  );
+        var bloqueInicio = dto.Fecha.Date + dto.HoraInicio;
+        var bloqueFin = dto.Fecha.Date + dto.HoraFin;
 
+        var tieneTurnos = await _context.Turnos.AnyAsync(t =>
+            t.BarberoId == dto.BarberoId &&
+            (t.Estado == EstadoTurno.Pendiente || t.Estado == EstadoTurno.EnProceso) &&
+            t.FechaHoraInicio < bloqueFin &&
+            t.HoraFin > bloqueInicio
+        );
 
         if (tieneTurnos)
             throw new InvalidOperationException("No se puede bloquear este horario porque ya hay turnos asignados.");
@@ -40,3 +40,4 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
         return true;
     }
 }
+
