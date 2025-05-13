@@ -13,36 +13,45 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
 
     public async Task<bool> CrearBloqueoAsync(CrearHorarioBloqueadoDTO dto)
     {
-        // ⏰ Hora exacta en Colombia sin UTC
         var zonaColombia = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
-        var fechaLocal = TimeZoneInfo.ConvertTimeFromUtc(dto.Fecha.ToUniversalTime(), zonaColombia).Date;
 
-        var bloqueInicio = fechaLocal.Add(dto.HoraInicio);
-        var bloqueFin = fechaLocal.Add(dto.HoraFin);
+        var fechaBase = dto.Fecha.Date;
+        var bloqueInicio = fechaBase.Add(dto.HoraInicio); // hora local
+        var bloqueFin = fechaBase.Add(dto.HoraFin);       // hora local
 
-        var turnosEnConflicto = await _context.Turnos
-            .Where(t =>
-                t.BarberoId == dto.BarberoId &&
-                (t.Estado == EstadoTurno.Pendiente || t.Estado == EstadoTurno.EnProceso) &&
-                t.FechaHoraInicio < bloqueFin &&
-                t.HoraFin > bloqueInicio
-            ).ToListAsync();
+        // Obtener turnos del barbero para ese día en UTC
+        var turnos = await _context.Turnos
+            .Where(t => t.BarberoId == dto.BarberoId &&
+                        (t.Estado == EstadoTurno.Pendiente || t.Estado == EstadoTurno.EnProceso))
+            .ToListAsync();
 
-        foreach (var t in turnosEnConflicto)
+        // Convertir los turnos a hora local para comparar correctamente
+        var turnosEnConflicto = turnos.Where(t =>
         {
-            Console.WriteLine($"❗ Turno en conflicto: {t.Id} | {t.FechaHoraInicio} - {t.HoraFin}");
-        }
+            var inicioCol = TimeZoneInfo.ConvertTimeFromUtc(t.FechaHoraInicio, zonaColombia);
+            var finCol = TimeZoneInfo.ConvertTimeFromUtc(t.HoraFin, zonaColombia);
+
+            Console.WriteLine($"❗ Turno en conflicto: {t.Id} | {inicioCol} - {finCol}");
+
+            return inicioCol < bloqueFin && finCol > bloqueInicio;
+        }).ToList();
 
         if (turnosEnConflicto.Any())
         {
-            Console.WriteLine($"⛔ Se detectó cruce con turno para el barbero {dto.BarberoId} entre {bloqueInicio} y {bloqueFin}");
+            Console.WriteLine($"⛔ Se detectó cruce con turno para el barbero {dto.BarberoId} entre {bloqueInicio} y {bloqueFin} (hora local)");
+            Console.WriteLine($"📦 dto.Fecha: {dto.Fecha}");
+            Console.WriteLine($"🕓 dto.HoraInicio: {dto.HoraInicio}");
+            Console.WriteLine($"🕕 dto.HoraFin: {dto.HoraFin}");
+            Console.WriteLine($"📌 bloqueInicio: {bloqueInicio} (Local)");
+            Console.WriteLine($"📌 bloqueFin: {bloqueFin} (Local)");
+
             throw new InvalidOperationException("No se puede bloquear este horario porque ya hay turnos asignados.");
         }
 
         var bloqueo = new HorarioBloqueadoBarbero
         {
             BarberoId = dto.BarberoId,
-            Fecha = fechaLocal,
+            Fecha = fechaBase,
             HoraInicio = dto.HoraInicio,
             HoraFin = dto.HoraFin,
             Motivo = dto.Motivo
@@ -52,5 +61,4 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
         await _context.SaveChangesAsync();
         return true;
     }
-
 }
