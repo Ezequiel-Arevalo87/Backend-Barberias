@@ -10,21 +10,29 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
     {
         _context = context;
     }
+
     public async Task<bool> CrearBloqueoAsync(CrearHorarioBloqueadoDTO dto)
     {
-        // Usar fecha local sin convertir a UTC
         var fechaBase = dto.Fecha.Date;
-        var bloqueInicio = fechaBase.Add(dto.HoraInicio); // Local
-        var bloqueFin = fechaBase.Add(dto.HoraFin);       // Local
+        var bloqueInicio = fechaBase.Add(dto.HoraInicio); // Ej: 2025-05-13 13:00:00
+        var bloqueFin = fechaBase.Add(dto.HoraFin);       // Ej: 2025-05-13 18:00:00
 
-        var tieneTurnos = await _context.Turnos.AnyAsync(t =>
-            t.BarberoId == dto.BarberoId &&
-            (t.Estado == EstadoTurno.Pendiente || t.Estado == EstadoTurno.EnProceso) &&
-            t.FechaHoraInicio < bloqueFin &&
-            t.HoraFin > bloqueInicio
-        );
+        // ✅ Traer turnos que realmente estén ese día y verificar cruce
+        var turnosEnConflicto = await _context.Turnos
+            .Where(t =>
+                t.BarberoId == dto.BarberoId &&
+                (t.Estado == EstadoTurno.Pendiente || t.Estado == EstadoTurno.EnProceso) &&
+                t.FechaHoraInicio.Date == fechaBase &&
+                t.FechaHoraInicio < bloqueFin &&
+                t.HoraFin > bloqueInicio
+            ).ToListAsync();
 
-        if (tieneTurnos)
+        foreach (var t in turnosEnConflicto)
+        {
+            Console.WriteLine($"❗ Turno en conflicto: {t.Id} | {t.FechaHoraInicio} - {t.HoraFin}");
+        }
+
+        if (turnosEnConflicto.Any())
         {
             Console.WriteLine($"⛔ Se detectó cruce con turno para el barbero {dto.BarberoId} entre {bloqueInicio} y {bloqueFin}");
             Console.WriteLine($"📦 dto.Fecha: {dto.Fecha}");
@@ -46,8 +54,7 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
 
         _context.HorariosBloqueados.Add(bloqueo);
         await _context.SaveChangesAsync();
+        Console.WriteLine("✅ Bloqueo registrado correctamente.");
         return true;
     }
-
 }
-
