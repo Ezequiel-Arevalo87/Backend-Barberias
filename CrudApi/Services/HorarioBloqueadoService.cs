@@ -13,7 +13,6 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
 
     public async Task<bool> CrearBloqueoAsync(CrearHorarioBloqueadoDTO dto)
     {
-        // 👉 Asegura que se use hora local, no UTC
         var fechaBase = DateTime.SpecifyKind(dto.Fecha.Date, DateTimeKind.Local);
         var bloqueInicio = DateTime.SpecifyKind(fechaBase.Add(dto.HoraInicio), DateTimeKind.Local);
         var bloqueFin = DateTime.SpecifyKind(fechaBase.Add(dto.HoraFin), DateTimeKind.Local);
@@ -27,7 +26,7 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
         var tieneTurnos = await _context.Turnos.AnyAsync(t =>
             t.BarberoId == dto.BarberoId &&
             (t.Estado == EstadoTurno.Pendiente || t.Estado == EstadoTurno.EnProceso) &&
-            EF.Functions.DateDiffDay(t.FechaHoraInicio, fechaBase) == 0 && // ✅ Coincide día
+            EF.Functions.DateDiffDay(t.FechaHoraInicio, bloqueInicio) == 0 && // Usa EF si no puedes usar TruncateTime
             t.FechaHoraInicio < bloqueFin &&
             t.HoraFin > bloqueInicio
         );
@@ -51,4 +50,5 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
         await _context.SaveChangesAsync();
         return true;
     }
+
 }
