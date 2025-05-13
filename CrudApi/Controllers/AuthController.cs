@@ -48,9 +48,17 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Debes confirmar tu correo electrónico antes de ingresar." });
         }
 
-        var barbero = await _context.Barberos.FirstOrDefaultAsync(b => b.UsuarioId == usuario.Id);
+        var barbero = await _context.Barberos
+     .AsNoTracking()
+     .FirstOrDefaultAsync(b => b.UsuarioId == usuario.Id);
 
-        var token = _jwtHelper.GenerateToken(usuario);
+        var token = _jwtHelper.GenerateToken(
+      usuario.Id.ToString(),
+      usuario.Correo,
+      usuario.Role?.Nombre ?? "Usuario",
+      barbero?.Id.ToString(),
+      barbero?.BarberiaId.ToString()
+  );
 
         return Ok(new
         {

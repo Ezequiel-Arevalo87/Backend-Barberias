@@ -21,7 +21,7 @@ namespace CrudApi.Utils
             _context = context;
         }
 
-        public string GenerateToken(string userId, string email, string role, string? barberoId = null)
+        public string GenerateToken(string userId, string email, string role, string? barberoId = null, string? barberiaId = null)
         {
             var secretKey = _config["JwtSettings:Key"];
             var issuer = _config["JwtSettings:Issuer"];
@@ -40,9 +40,10 @@ namespace CrudApi.Utils
             };
 
             if (!string.IsNullOrEmpty(barberoId))
-            {
                 claims.Add(new Claim("barberoId", barberoId));
-            }
+
+            if (!string.IsNullOrEmpty(barberiaId))
+                claims.Add(new Claim("barberiaId", barberiaId));
 
             var key = Encoding.UTF8.GetBytes(secretKey);
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -66,12 +67,15 @@ namespace CrudApi.Utils
 
             string roleName = usuario.Role?.Nombre ?? "Usuario";
 
-            string? barberoId = _context.Barberos
+            var barbero = _context.Barberos
                 .Where(b => b.UsuarioId == usuario.Id)
-                .Select(b => b.Id.ToString())
+                .Select(b => new { b.Id, b.BarberiaId })
                 .FirstOrDefault();
 
-            return GenerateToken(usuario.Id.ToString(), usuario.Correo, roleName, barberoId);
+            string? barberoId = barbero?.Id.ToString();
+            string? barberiaId = barbero?.BarberiaId.ToString();
+
+            return GenerateToken(usuario.Id.ToString(), usuario.Correo, roleName, barberoId, barberiaId);
         }
     }
 }
