@@ -13,33 +13,28 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
 
     public async Task<bool> CrearBloqueoAsync(CrearHorarioBloqueadoDTO dto)
     {
-        var fechaBase = dto.Fecha.Date;
-        var bloqueInicio = fechaBase.Add(dto.HoraInicio); // Ej: 2025-05-13 13:00:00
-        var bloqueFin = fechaBase.Add(dto.HoraFin);       // Ej: 2025-05-13 18:00:00
+        // 👉 Asegura que se use hora local, no UTC
+        var fechaBase = DateTime.SpecifyKind(dto.Fecha.Date, DateTimeKind.Local);
+        var bloqueInicio = DateTime.SpecifyKind(fechaBase.Add(dto.HoraInicio), DateTimeKind.Local);
+        var bloqueFin = DateTime.SpecifyKind(fechaBase.Add(dto.HoraFin), DateTimeKind.Local);
 
-        // ✅ Traer turnos que realmente estén ese día y verificar cruce
-        var turnosEnConflicto = await _context.Turnos
-            .Where(t =>
-                t.BarberoId == dto.BarberoId &&
-                (t.Estado == EstadoTurno.Pendiente || t.Estado == EstadoTurno.EnProceso) &&
-                t.FechaHoraInicio.Date == fechaBase &&
-                t.FechaHoraInicio < bloqueFin &&
-                t.HoraFin > bloqueInicio
-            ).ToListAsync();
+        Console.WriteLine($"📦 dto.Fecha: {dto.Fecha}");
+        Console.WriteLine($"🕓 dto.HoraInicio: {dto.HoraInicio}");
+        Console.WriteLine($"🕕 dto.HoraFin: {dto.HoraFin}");
+        Console.WriteLine($"📌 bloqueInicio: {bloqueInicio} ({bloqueInicio.Kind})");
+        Console.WriteLine($"📌 bloqueFin: {bloqueFin} ({bloqueFin.Kind})");
 
-        foreach (var t in turnosEnConflicto)
-        {
-            Console.WriteLine($"❗ Turno en conflicto: {t.Id} | {t.FechaHoraInicio} - {t.HoraFin}");
-        }
+        var tieneTurnos = await _context.Turnos.AnyAsync(t =>
+            t.BarberoId == dto.BarberoId &&
+            (t.Estado == EstadoTurno.Pendiente || t.Estado == EstadoTurno.EnProceso) &&
+            EF.Functions.DateDiffDay(t.FechaHoraInicio, fechaBase) == 0 && // ✅ Coincide día
+            t.FechaHoraInicio < bloqueFin &&
+            t.HoraFin > bloqueInicio
+        );
 
-        if (turnosEnConflicto.Any())
+        if (tieneTurnos)
         {
             Console.WriteLine($"⛔ Se detectó cruce con turno para el barbero {dto.BarberoId} entre {bloqueInicio} y {bloqueFin}");
-            Console.WriteLine($"📦 dto.Fecha: {dto.Fecha}");
-            Console.WriteLine($"🕓 dto.HoraInicio: {dto.HoraInicio}");
-            Console.WriteLine($"🕕 dto.HoraFin: {dto.HoraFin}");
-            Console.WriteLine($"📌 bloqueInicio: {bloqueInicio}");
-            Console.WriteLine($"📌 bloqueFin: {bloqueFin}");
             throw new InvalidOperationException("No se puede bloquear este horario porque ya hay turnos asignados.");
         }
 
@@ -54,7 +49,6 @@ public class HorarioBloqueadoService : IHorarioBloqueadoService
 
         _context.HorariosBloqueados.Add(bloqueo);
         await _context.SaveChangesAsync();
-        Console.WriteLine("✅ Bloqueo registrado correctamente.");
         return true;
     }
 }
