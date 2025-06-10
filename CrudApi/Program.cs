@@ -12,6 +12,8 @@ using Hangfire;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using TuProyectoNamespace.Services; // Ajusta si tu namespace es otro
+using Npgsql.EntityFrameworkCore.PostgreSQL; // Para PostgreSQL
+using Hangfire.PostgreSql; // Para Hangfire con PostgreSQL
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,8 +31,8 @@ if (FirebaseApp.DefaultInstance == null)
 }
 
 // 🔹 Obtener la cadena de conexión
-var connectionString = builder.Configuration["DefaultConnection"]
-                    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("La cadena de conexión 'DefaultConnection' no está definida.");
 
 if (string.IsNullOrEmpty(connectionString))
 {
@@ -38,8 +40,10 @@ if (string.IsNullOrEmpty(connectionString))
 }
 
 // 🔹 Configurar EF Core
+//builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//    options.UseSqlServer(connectionString));
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 🔹 Registrar servicios
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
@@ -59,9 +63,11 @@ builder.Services.AddTransient<EmailService>();
 builder.Services.AddScoped<IHorarioBloqueadoService, HorarioBloqueadoService>();
 
 
-// 🔹 Configurar Hangfire
+// 🔹 Configurar Hangfire con PostgreSQL
 builder.Services.AddHangfire(config =>
-    config.UseSqlServerStorage(connectionString));
+{
+    config.UsePostgreSqlStorage(connectionString);
+});
 builder.Services.AddHangfireServer();
 
 // 🔹 Configurar controladores
