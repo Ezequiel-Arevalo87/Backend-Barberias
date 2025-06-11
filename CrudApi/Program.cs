@@ -61,7 +61,7 @@ builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddTransient<EmailService>();
 builder.Services.AddScoped<IHorarioBloqueadoService, HorarioBloqueadoService>();
-
+//AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 // 🔹 Configurar Hangfire con PostgreSQL
 builder.Services.AddHangfire(config =>
