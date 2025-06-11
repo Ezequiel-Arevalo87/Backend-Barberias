@@ -16,42 +16,55 @@ public class ClienteService : IClienteService
 
     public async Task<ClienteDTO> RegistrarCliente(ClienteRegistroDTO clienteDto)
     {
-        if (await _context.Usuarios.AnyAsync(u => u.Correo == clienteDto.Email))
-            throw new Exception("El email ya está registrado");
 
-        var usuario = new Usuario
+        try {
+            if (await _context.Usuarios.AnyAsync(u => u.Correo == clienteDto.Email))
+                throw new Exception("El email ya está registrado");
+
+            var usuario = new Usuario
+            {
+                Nombre = clienteDto.Nombre,
+                Correo = clienteDto.Email,
+                Clave = PasswordHasher.HashPassword(clienteDto.Password),
+                Direccion = clienteDto.Direccion,
+                Telefono = clienteDto.Telefono,
+                RoleId = clienteDto.RoleId,
+                FechaRegistro = DateTime.Now.ToUniversalTime(),
+
+            };
+
+            _context.Usuarios.Add(usuario);
+            await _context.SaveChangesAsync();
+
+            var cliente = new Cliente
+            {
+                UsuarioId = usuario.Id,
+                Apellido = clienteDto.Apellido,
+                FechaNacimiento = clienteDto.FechaNacimiento.ToUniversalTime(),
+            };
+
+            _context.Clientes.Add(cliente);
+            await _context.SaveChangesAsync();
+
+            return new ClienteDTO
+            {
+                Id = cliente.Id,
+                Nombre = usuario.Nombre,
+                Apellido = cliente.Apellido,
+                Email = usuario.Correo,
+                FechaNacimiento = cliente.FechaNacimiento.ToUniversalTime(),
+                CantidadReservas = 0
+            };
+
+        }
+        catch (Exception e)
         {
-            Nombre = clienteDto.Nombre,
-            Correo = clienteDto.Email,
-            Clave = PasswordHasher.HashPassword(clienteDto.Password),
-            Direccion = clienteDto.Direccion,
-            Telefono = clienteDto.Telefono,
-            RoleId = clienteDto.RoleId,
-            FechaRegistro = DateTime.Now
-        };
+            var a = e;
+            Console.WriteLine(a);
+            return null;
+        }
 
-        _context.Usuarios.Add(usuario);
-        await _context.SaveChangesAsync();
-
-        var cliente = new Cliente
-        {
-            UsuarioId = usuario.Id,
-            Apellido = clienteDto.Apellido,
-            FechaNacimiento = clienteDto.FechaNacimiento
-        };
-
-        _context.Clientes.Add(cliente);
-        await _context.SaveChangesAsync();
-
-        return new ClienteDTO
-        {
-            Id = cliente.Id,
-            Nombre = usuario.Nombre,
-            Apellido = cliente.Apellido,
-            Email = usuario.Correo,
-            FechaNacimiento = cliente.FechaNacimiento,
-            CantidadReservas = 0
-        };
+      
     }
 
     public async Task<ClienteDTO?> ObtenerClientePorEmail(string email)
@@ -70,7 +83,7 @@ public class ClienteService : IClienteService
             Nombre = cliente.Usuario.Nombre,
             Apellido = cliente.Apellido,
             Email = cliente.Usuario.Correo,
-            FechaNacimiento = cliente.FechaNacimiento,
+            FechaNacimiento = cliente.FechaNacimiento.ToUniversalTime(),
             CantidadReservas = cliente.Turnos.Count
         };
     }
