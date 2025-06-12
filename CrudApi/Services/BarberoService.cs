@@ -113,7 +113,7 @@ namespace CrudApi.Services
                 RoleId = barberoDto.RoleId,
                 Direccion = barberoDto.Direccion,
                 Telefono = barberoDto.Telefono,
-                FechaRegistro = DateTime.Now
+                FechaRegistro = DateTime.Now.ToUniversalTime()
                 
             };
 

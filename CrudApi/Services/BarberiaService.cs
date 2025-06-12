@@ -87,7 +87,7 @@ public class BarberiaService : IBarberiaService
             RoleId = barberiaDto.Usuario.RoleId,
             Direccion = barberiaDto.Usuario.Direccion,
             Telefono = barberiaDto.Usuario.Telefono,
-            FechaRegistro = DateTime.Now
+            FechaRegistro = DateTime.Now.ToUniversalTime()
         };
 
         _context.Usuarios.Add(usuario);
