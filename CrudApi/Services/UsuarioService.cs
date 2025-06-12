@@ -23,7 +23,7 @@ public class UsuarioService : IUsuarioService
                 Correo = u.Correo,
                 Direccion = u.Direccion,
                 Telefono = u.Telefono,
-                FechaRegistro = u.FechaRegistro
+                FechaRegistro = u.FechaRegistro.ToUniversalTime()
             })
             .ToListAsync(); // Error: `ToListAsync()` no disponible para DTOs
     }
@@ -38,40 +38,50 @@ public class UsuarioService : IUsuarioService
             Id = usuario.Id,
             Nombre = usuario.Nombre, 
             Correo = usuario.Correo, 
-            FechaRegistro = usuario.FechaRegistro
+            FechaRegistro = usuario.FechaRegistro.ToUniversalTime()
         };
     }
 
     public async Task<Usuario> CreateUsuarioAsync(UsuarioCreateDTO usuarioDto)
     {
         // Verificar si el RoleId existe en la base de datos
-        var roleExists = await _context.Roles.AnyAsync(r => r.Id == usuarioDto.RoleId);
-        if (!roleExists)
+         try {
+            var roleExists = await _context.Roles.AnyAsync(r => r.Id == usuarioDto.RoleId);
+            if (!roleExists)
+            {
+                throw new Exception("El RoleId proporcionado no existe en la base de datos.");
+            }
+
+            var usuario = new Usuario
+            {
+
+                Nombre = usuarioDto.Nombre,
+                Correo = usuarioDto.Correo,
+                Direccion = usuarioDto.Direccion,
+                Telefono = usuarioDto.Telefono,
+                Clave = usuarioDto.Clave,
+                RoleId = usuarioDto.RoleId,
+                FechaRegistro = usuarioDto.FechaRegistro.ToUniversalTime()
+            };
+
+            if (!string.IsNullOrWhiteSpace(usuarioDto.Clave))
+            {
+                usuario.Clave = PasswordHasher.HashPassword(usuarioDto.Clave);
+            }
+
+            _context.Usuarios.Add(usuario);
+            await _context.SaveChangesAsync();
+
+            return usuario;
+        }
+        catch (Exception e )
         {
-            throw new Exception("El RoleId proporcionado no existe en la base de datos.");
+            var a = e;
+            Console.WriteLine(a);
+            return null;
         }
 
-        var usuario = new Usuario
-        {
-           
-            Nombre = usuarioDto.Nombre,
-            Correo = usuarioDto.Correo,
-            Direccion = usuarioDto.Direccion,
-            Telefono = usuarioDto.Telefono,
-            Clave = usuarioDto.Clave,
-            RoleId = usuarioDto.RoleId,
-            FechaRegistro = usuarioDto.FechaRegistro
-        };
-
-        if (!string.IsNullOrWhiteSpace(usuarioDto.Clave))
-        {
-            usuario.Clave = PasswordHasher.HashPassword(usuarioDto.Clave);
-        }
-
-        _context.Usuarios.Add(usuario);
-        await _context.SaveChangesAsync();
-
-        return usuario;
+      
     }
 
     public async Task<Usuario?> UpdateUsuarioAsync(int id, UsuarioUpdateDTO usuarioDto)
